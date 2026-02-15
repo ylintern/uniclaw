@@ -1171,12 +1171,8 @@ async fn main() -> anyhow::Result<()> {
             gw_config.host,
             gw_config.port
         );
-        tracing::info!(
-            "Web UI: http://{}:{}/?token={}",
-            gw_config.host,
-            gw_config.port,
-            gw.auth_token()
-        );
+        tracing::info!("Web UI: http://{}:{}", gw_config.host, gw_config.port);
+        tracing::info!("Web gateway auth token configured (redacted)");
 
         channels.add(Box::new(gw));
     }

@@ -692,7 +692,7 @@ impl SetupWizard {
             Arc::clone(s)
         } else {
             let config = SessionConfig::default();
-            Arc::new(SessionManager::new(config))
+            Arc::new(SessionManager::new_async(config).await)
         };
 
         // Trigger authentication flow

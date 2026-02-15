@@ -194,33 +194,17 @@ pub async fn migrate_disk_to_db(
         }
     }
 
-    // 4. Migrate session.json if it exists
+    // 4. Legacy session.json handling
+    //
+    // Session bearer tokens are intentionally not migrated into DB settings.
+    // Keep migration marker behavior for compatibility, but avoid copying
+    // potentially sensitive token material into plaintext settings storage.
     let session_path = ironclaw_dir.join("session.json");
     if session_path.exists() {
-        match std::fs::read_to_string(&session_path) {
-            Ok(content) => match serde_json::from_str::<serde_json::Value>(&content) {
-                Ok(value) => {
-                    store
-                        .set_setting(user_id, "nearai.session_token", &value)
-                        .await
-                        .map_err(|e| {
-                            MigrationError::Database(format!(
-                                "Failed to write session to DB: {}",
-                                e
-                            ))
-                        })?;
-                    tracing::info!("Migrated session.json to database");
-
-                    rename_to_migrated(&session_path);
-                }
-                Err(e) => {
-                    tracing::warn!("Failed to parse session.json: {}", e);
-                }
-            },
-            Err(e) => {
-                tracing::warn!("Failed to read session.json: {}", e);
-            }
-        }
+        tracing::info!(
+            "Found legacy session.json; skipping DB migration for security and marking as migrated"
+        );
+        rename_to_migrated(&session_path);
     }
 
     // 5. Rename settings.json to .migrated (don't delete, safety net)
