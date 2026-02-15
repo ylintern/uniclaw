@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="ironclaw.png" alt="IronClaw" width="200"/>
+  <img src="ironclaw.png" alt="Uniclaw" width="200"/>
 </p>
 
-<h1 align="center">IronClaw</h1>
+<h1 align="center">Uniclaw</h1>
 
 <p align="center">
   <strong>Your secure personal AI assistant, always on your side</strong>
@@ -21,16 +21,29 @@
 
 ## Philosophy
 
-IronClaw is built on a simple principle: **your AI assistant should work for you, not against you**.
+Uniclaw is built on a simple principle: **your AI assistant should work for you, not against you**.
 
-In a world where AI systems are increasingly opaque about data handling and aligned with corporate interests, IronClaw takes a different approach:
+In a world where AI systems are increasingly opaque about data handling and aligned with corporate interests, Uniclaw takes a different approach:
 
 - **Your data stays yours** - All information is stored locally, encrypted, and never leaves your control
 - **Transparency by design** - Open source, auditable, no hidden telemetry or data harvesting
 - **Self-expanding capabilities** - Build new tools on the fly without waiting for vendor updates
 - **Defense in depth** - Multiple security layers protect against prompt injection and data exfiltration
 
-IronClaw is the AI assistant you can actually trust with your personal and professional life.
+Uniclaw is the AI assistant you can actually trust with your personal and professional life.
+
+## Important legacy documentation from IronClaw
+
+This repository originated as **IronClaw**. Some docs, commands, env vars, and artifact names still use `ironclaw` while migration is ongoing.
+
+Please keep and use these docs—they are still important:
+
+- `src/setup/README.md` (authoritative onboarding wizard spec)
+- `FEATURE_PARITY.md` (tracking implementation parity/status)
+- `docs/BUILDING_CHANNELS.md` and channel source docs
+- `CHANGELOG.md` for release and migration history
+
+When in doubt, prefer the behavior/spec in those files even if naming is still legacy.
 
 ## Features
 
@@ -53,7 +66,7 @@ IronClaw is the AI assistant you can actually trust with your personal and profe
 
 ### Self-Expanding
 
-- **Dynamic Tool Building** - Describe what you need, and IronClaw builds it as a WASM tool
+- **Dynamic Tool Building** - Describe what you need, and Uniclaw builds it as a WASM tool
 - **MCP Protocol** - Connect to Model Context Protocol servers for additional capabilities
 - **Plugin Architecture** - Drop in new WASM tools and channels without restarting
 
@@ -132,7 +145,7 @@ psql ironclaw -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
 ## Configuration
 
-Run the setup wizard to configure IronClaw:
+Run the setup wizard to configure Uniclaw:
 
 ```bash
 ironclaw onboard
@@ -144,7 +157,7 @@ and secrets encryption (using your system keychain). All settings are saved to
 
 ## Security
 
-IronClaw implements defense in depth to protect your data and prevent misuse.
+Uniclaw implements defense in depth to protect your data and prevent misuse.
 
 ### WASM Sandbox
 
@@ -237,6 +250,7 @@ External content passes through multiple security layers:
 
 ```bash
 # First-time setup (configures database, auth, etc.)
+# NOTE: binary name is still `ironclaw` in current builds.
 ironclaw onboard
 
 # Start interactive REPL
