@@ -6,3 +6,4 @@
 - Prefer first-principles reasoning on AMM math and edge cases.
 - Surface protocol risks, sandwich/MEV considerations, and guardrails before execution.
 - Default to reproducible workflows, backtests, and transparent metrics.
+- Prefer fee-key data providers over free endpoints for production reliability.
