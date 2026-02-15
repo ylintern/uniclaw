@@ -1,27 +1,37 @@
 //! Session management for NEAR AI authentication.
 //!
 //! Handles session token persistence, expiration detection, and renewal via
-//! OAuth flow. Tokens are stored in `~/.ironclaw/session.json` and refreshed
-//! automatically when expired.
+//! OAuth flow. Tokens are persisted encrypted-at-rest in
+//! `~/.ironclaw/session.json` and refreshed automatically when expired.
 
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use base64::{Engine, engine::general_purpose::STANDARD as BASE64_STANDARD};
 use chrono::{DateTime, Utc};
 use reqwest::Client;
-use secrecy::SecretString;
+use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, RwLock};
 
 use crate::error::LlmError;
+use crate::secrets::SecretsCrypto;
 
 /// Session data persisted to disk.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionData {
-    pub session_token: String,
+    /// Encrypted token bytes (nonce || ciphertext || tag), base64 encoded.
+    #[serde(default)]
+    pub encrypted_token: Option<String>,
+    /// Per-token salt for HKDF, base64 encoded.
+    #[serde(default)]
+    pub key_salt: Option<String>,
     pub created_at: DateTime<Utc>,
     #[serde(default)]
     pub auth_provider: Option<String>,
+    /// Legacy plaintext token field kept only for backward-compatible reads.
+    #[serde(default)]
+    pub session_token: Option<String>,
 }
 
 /// Configuration for session management.
@@ -58,16 +68,18 @@ pub struct SessionManager {
     token: RwLock<Option<SecretString>>,
     /// Prevents thundering herd during concurrent 401s.
     renewal_lock: Mutex<()>,
-    /// Optional database store for persisting session to the settings table.
+    /// Optional database store reference (currently unused for token persistence).
     store: RwLock<Option<Arc<dyn crate::db::Database>>>,
-    /// User ID for DB settings (default: "default").
+    /// User ID associated with the store attachment (default: "default").
     user_id: RwLock<String>,
 }
 
 impl SessionManager {
-    /// Create a new session manager and load any existing token from disk.
+    /// Create a new session manager.
+    ///
+    /// Use `new_async` for disk loading.
     pub fn new(config: SessionConfig) -> Self {
-        let manager = Self {
+        Self {
             config,
             client: Client::builder()
                 .timeout(std::time::Duration::from_secs(30))
@@ -77,23 +89,7 @@ impl SessionManager {
             renewal_lock: Mutex::new(()),
             store: RwLock::new(None),
             user_id: RwLock::new("default".to_string()),
-        };
-
-        // Try to load existing session synchronously during construction
-        if let Ok(data) = std::fs::read_to_string(&manager.config.session_path)
-            && let Ok(session) = serde_json::from_str::<SessionData>(&data)
-        {
-            // We can't await here, so we use try_write
-            if let Ok(mut guard) = manager.token.try_write() {
-                *guard = Some(SecretString::from(session.session_token));
-                tracing::info!(
-                    "Loaded session token from {}",
-                    manager.config.session_path.display()
-                );
-            }
         }
-
-        manager
     }
 
     /// Create a session manager and load token asynchronously.
@@ -117,19 +113,13 @@ impl SessionManager {
         manager
     }
 
-    /// Attach a database store for persisting session tokens.
+    /// Attach a database store for future session metadata use.
     ///
-    /// When a store is attached, session tokens are saved to the `settings`
-    /// table (key: `nearai.session_token`) in addition to the disk file.
-    /// On load, DB is preferred over disk.
+    /// Session bearer tokens are intentionally **not** written to generic
+    /// settings storage to avoid plaintext token persistence in DB settings.
     pub async fn attach_store(&self, store: Arc<dyn crate::db::Database>, user_id: &str) {
         *self.store.write().await = Some(store);
         *self.user_id.write().await = user_id.to_string();
-
-        // Try to load from DB (may have been saved by a previous run)
-        if let Err(e) = self.load_session_from_db().await {
-            tracing::debug!("No session in DB: {}", e);
-        }
     }
 
     /// Get the current session token, returning an error if not authenticated.
@@ -343,10 +333,13 @@ impl SessionManager {
 
     /// Save session data to disk and (if available) to the database.
     async fn save_session(&self, token: &str, auth_provider: Option<&str>) -> Result<(), LlmError> {
+        let (encrypted, salt) = encrypt_session_token(token).await?;
         let session = SessionData {
-            session_token: token.to_string(),
+            encrypted_token: Some(BASE64_STANDARD.encode(encrypted)),
+            key_salt: Some(BASE64_STANDARD.encode(salt)),
             created_at: Utc::now(),
             auth_provider: auth_provider.map(String::from),
+            session_token: None,
         };
 
         // Save to disk (always, as bootstrap fallback)
@@ -397,58 +390,10 @@ impl SessionManager {
                 })?;
         }
 
-        tracing::debug!("Session saved to {}", self.config.session_path.display());
-
-        // Also save to DB if a store is attached
-        if let Some(ref store) = *self.store.read().await {
-            let user_id = self.user_id.read().await.clone();
-            let session_json = serde_json::to_value(&session)
-                .unwrap_or(serde_json::Value::String(token.to_string()));
-            if let Err(e) = store
-                .set_setting(&user_id, "nearai.session_token", &session_json)
-                .await
-            {
-                tracing::warn!("Failed to save session to DB: {}", e);
-            } else {
-                tracing::debug!("Session also saved to DB settings");
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Try to load session from the database.
-    async fn load_session_from_db(&self) -> Result<(), LlmError> {
-        let store_guard = self.store.read().await;
-        let store = store_guard
-            .as_ref()
-            .ok_or_else(|| LlmError::SessionRenewalFailed {
-                provider: "nearai".to_string(),
-                reason: "No DB store attached".to_string(),
-            })?;
-
-        let user_id = self.user_id.read().await.clone();
-        let value = store
-            .get_setting(&user_id, "nearai.session_token")
-            .await
-            .map_err(|e| LlmError::SessionRenewalFailed {
-                provider: "nearai".to_string(),
-                reason: format!("DB query failed: {}", e),
-            })?
-            .ok_or_else(|| LlmError::SessionRenewalFailed {
-                provider: "nearai".to_string(),
-                reason: "No session in DB".to_string(),
-            })?;
-
-        let session: SessionData =
-            serde_json::from_value(value).map_err(|e| LlmError::SessionRenewalFailed {
-                provider: "nearai".to_string(),
-                reason: format!("Failed to parse DB session: {}", e),
-            })?;
-
-        let mut guard = self.token.write().await;
-        *guard = Some(SecretString::from(session.session_token));
-        tracing::info!("Loaded session from DB settings");
+        tracing::debug!(
+            "Encrypted session saved to {}",
+            self.config.session_path.display()
+        );
 
         Ok(())
     }
@@ -474,9 +419,23 @@ impl SessionManager {
                 reason: format!("Failed to parse session file: {}", e),
             })?;
 
+        let token = decrypt_session_token(&session).await?;
+
         {
             let mut guard = self.token.write().await;
-            *guard = Some(SecretString::from(session.session_token));
+            *guard = Some(SecretString::from(token));
+        }
+
+        // Auto-migrate legacy plaintext session file to encrypted format.
+        if session.session_token.is_some() {
+            if let Some(ref guard) = *self.token.read().await {
+                if let Err(e) = self
+                    .save_session(guard.expose_secret(), session.auth_provider.as_deref())
+                    .await
+                {
+                    tracing::warn!("Failed to auto-migrate legacy session file: {}", e);
+                }
+            }
         }
 
         tracing::info!(
@@ -493,6 +452,95 @@ impl SessionManager {
         let mut guard = self.token.write().await;
         *guard = Some(token);
     }
+}
+
+async fn load_session_master_key() -> Result<SecretString, LlmError> {
+    if let Ok(env_key) = std::env::var("SECRETS_MASTER_KEY")
+        && !env_key.is_empty()
+    {
+        return Ok(SecretString::from(env_key));
+    }
+
+    let keychain_key_bytes = crate::secrets::keychain::get_master_key()
+        .await
+        .map_err(|e| LlmError::SessionRenewalFailed {
+            provider: "nearai".to_string(),
+            reason: format!(
+                "No encryption key for session persistence. Set SECRETS_MASTER_KEY or configure keychain: {}",
+                e
+            ),
+        })?;
+
+    let key_hex: String = keychain_key_bytes
+        .iter()
+        .map(|b| format!("{:02x}", b))
+        .collect();
+    Ok(SecretString::from(key_hex))
+}
+
+async fn encrypt_session_token(token: &str) -> Result<(Vec<u8>, Vec<u8>), LlmError> {
+    let master_key = load_session_master_key().await?;
+    let crypto = SecretsCrypto::new(master_key).map_err(|e| LlmError::SessionRenewalFailed {
+        provider: "nearai".to_string(),
+        reason: format!("Invalid session encryption key: {}", e),
+    })?;
+    crypto
+        .encrypt(token.as_bytes())
+        .map_err(|e| LlmError::SessionRenewalFailed {
+            provider: "nearai".to_string(),
+            reason: format!("Failed to encrypt session token: {}", e),
+        })
+}
+
+async fn decrypt_session_token(session: &SessionData) -> Result<String, LlmError> {
+    if let Some(ref legacy_token) = session.session_token {
+        tracing::warn!("Loaded legacy plaintext session token; it will be re-saved encrypted.");
+        return Ok(legacy_token.clone());
+    }
+
+    let encrypted_b64 =
+        session
+            .encrypted_token
+            .as_deref()
+            .ok_or_else(|| LlmError::SessionRenewalFailed {
+                provider: "nearai".to_string(),
+                reason: "Missing encrypted session token".to_string(),
+            })?;
+    let salt_b64 = session
+        .key_salt
+        .as_deref()
+        .ok_or_else(|| LlmError::SessionRenewalFailed {
+            provider: "nearai".to_string(),
+            reason: "Missing session key salt".to_string(),
+        })?;
+
+    let encrypted =
+        BASE64_STANDARD
+            .decode(encrypted_b64)
+            .map_err(|e| LlmError::SessionRenewalFailed {
+                provider: "nearai".to_string(),
+                reason: format!("Invalid encrypted session token encoding: {}", e),
+            })?;
+    let salt = BASE64_STANDARD
+        .decode(salt_b64)
+        .map_err(|e| LlmError::SessionRenewalFailed {
+            provider: "nearai".to_string(),
+            reason: format!("Invalid session key salt encoding: {}", e),
+        })?;
+
+    let master_key = load_session_master_key().await?;
+    let crypto = SecretsCrypto::new(master_key).map_err(|e| LlmError::SessionRenewalFailed {
+        provider: "nearai".to_string(),
+        reason: format!("Invalid session encryption key: {}", e),
+    })?;
+
+    crypto
+        .decrypt(&encrypted, &salt)
+        .map_err(|e| LlmError::SessionRenewalFailed {
+            provider: "nearai".to_string(),
+            reason: format!("Failed to decrypt session token: {}", e),
+        })
+        .map(|s| s.expose().to_string())
 }
 
 /// Create a session manager from a config, migrating from env var if present.
@@ -532,6 +580,14 @@ mod tests {
 
         let manager = SessionManager::new_async(config.clone()).await;
 
+        // SAFETY: test-only process-local mutation of env var for deterministic key setup.
+        unsafe {
+            std::env::set_var(
+                "SECRETS_MASTER_KEY",
+                "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            );
+        }
+
         // No token initially
         assert!(!manager.has_token().await);
 
@@ -558,8 +614,15 @@ mod tests {
         // Verify file contents
         let data: SessionData =
             serde_json::from_str(&std::fs::read_to_string(&session_path).unwrap()).unwrap();
-        assert_eq!(data.session_token, "test_token_123");
+        assert!(data.session_token.is_none());
+        assert!(data.encrypted_token.is_some());
+        assert!(!data.encrypted_token.unwrap().contains("test_token_123"));
         assert_eq!(data.auth_provider, Some("near".to_string()));
+
+        // SAFETY: test cleanup for process-local env var created above.
+        unsafe {
+            std::env::remove_var("SECRETS_MASTER_KEY");
+        }
     }
 
     #[tokio::test]

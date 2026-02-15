@@ -26,12 +26,9 @@ function authenticate() {
   apiFetch('/api/chat/threads')
     .then(() => {
       sessionStorage.setItem('ironclaw_token', token);
+      document.cookie = 'ironclaw_session=' + encodeURIComponent(token) + '; Path=/; SameSite=Strict';
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
-      // Strip token from URL so it's not visible in the address bar
-      const cleaned = new URL(window.location);
-      cleaned.searchParams.delete('token');
-      window.history.replaceState({}, '', cleaned.pathname + cleaned.search);
       connectSSE();
       connectLogSSE();
       startGatewayStatusPolling();
@@ -41,6 +38,7 @@ function authenticate() {
     })
     .catch(() => {
       sessionStorage.removeItem('ironclaw_token');
+      document.cookie = 'ironclaw_session=; Path=/; Max-Age=0; SameSite=Strict';
       document.getElementById('auth-screen').style.display = '';
       document.getElementById('app').style.display = 'none';
       document.getElementById('auth-error').textContent = 'Invalid token';
@@ -53,13 +51,6 @@ document.getElementById('token-input').addEventListener('keydown', (e) => {
 
 // Auto-authenticate from URL param or saved session
 (function autoAuth() {
-  const params = new URLSearchParams(window.location.search);
-  const urlToken = params.get('token');
-  if (urlToken) {
-    document.getElementById('token-input').value = urlToken;
-    authenticate();
-    return;
-  }
   const saved = sessionStorage.getItem('ironclaw_token');
   if (saved) {
     document.getElementById('token-input').value = saved;
@@ -92,7 +83,7 @@ function apiFetch(path, options) {
 function connectSSE() {
   if (eventSource) eventSource.close();
 
-  eventSource = new EventSource('/api/chat/events?token=' + encodeURIComponent(token));
+  eventSource = new EventSource('/api/chat/events');
 
   eventSource.onopen = () => {
     document.getElementById('sse-dot').classList.remove('disconnected');
@@ -1052,7 +1043,7 @@ let logBuffer = []; // buffer while paused
 function connectLogSSE() {
   if (logEventSource) logEventSource.close();
 
-  logEventSource = new EventSource('/api/logs/events?token=' + encodeURIComponent(token));
+  logEventSource = new EventSource('/api/logs/events');
 
   logEventSource.addEventListener('log', (e) => {
     const entry = JSON.parse(e.data);

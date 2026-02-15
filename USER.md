@@ -23,20 +23,20 @@ When both free and paid providers are available, default to paid/fee-key endpoin
 
 ### Required Core Keys (for day-to-day Uniswap workflows)
 - RPC / chain access
-  - Alchemy endpoint: https://unichain-mainnet.g.alchemy.com/v2/HJndPUU9eiXkPVGaGBdteJeljYK10h-4
-  - Alchemy API key: HJndPUU9eiXkPVGaGBdteJeljYK10h-4
-  - Goldsky RPC: https://edge.goldsky.com/standard/evm/130?secret=gs_edge_cmlo63m0q60f601z330cg2vgr
+  - Alchemy endpoint: `https://unichain-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`
+  - Alchemy API key: `<set via secret manager / env>`
+  - Goldsky RPC: `https://edge.goldsky.com/standard/evm/130?secret=${GOLDSKY_SECRET}`
 - Indexing / historical queries
-  - The Graph API key: 224883d92810ea921cb6da99745d4dbf
+  - The Graph API key: `<set via secret manager / env>`
 - Market pricing
-  - CoinGecko demo API URL: https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&ids=bitcoin&x_cg_demo_api_key=CG-cCvtPdw4KizSMV9DQBiA9R38
-  - CoinGecko demo key: CG-cCvtPdw4KizSMV9DQBiA9R38
+  - CoinGecko demo API URL: `https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&ids=bitcoin&x_cg_demo_api_key=${COINGECKO_API_KEY}`
+  - CoinGecko demo key: `<set via secret manager / env>`
 - Auth / wallet plumbing
-  - Wallet Auth API key: a98a1e0d-2a20-463a-a3e2-940eaf9abc79
-  - Wallet Auth ID: 908a9c06f858017652c9ce6a383d41bc
+  - Wallet Auth API key: `<set via secret manager / env>`
+  - Wallet Auth ID: `<set via secret manager / env>`
 
 ### Additional Provided Credential
-- ebox: cmlo6514g5t4j01x27qax4qri
+- ebox: `<set via secret manager / env>`
 
 ## Suggested Environment Variable Mapping
 - `ALCHEMY_UNICHAIN_URL`
