@@ -265,17 +265,10 @@ pub async fn start_server(
             auth_middleware,
         ));
 
-    // CORS: restrict to same-origin by default. Only localhost/127.0.0.1
-    // origins are allowed, since the gateway is a local-first service.
+    // CORS: restrict to same-origin by default and keep parity with WebSocket
+    // origin policy. The gateway stays local-first (loopback-only origins).
     let cors = CorsLayer::new()
-        .allow_origin([
-            format!("http://{}:{}", bound_addr.ip(), bound_addr.port())
-                .parse()
-                .expect("valid origin"),
-            format!("http://localhost:{}", bound_addr.port())
-                .parse()
-                .expect("valid origin"),
-        ])
+        .allow_origin(allowed_http_origins_for_gateway(bound_addr))
         .allow_methods([
             axum::http::Method::GET,
             axum::http::Method::POST,
@@ -534,6 +527,18 @@ pub async fn clear_auth_mode(state: &GatewayState) {
     }
 }
 
+fn allowed_http_origins_for_gateway(bound_addr: SocketAddr) -> Vec<axum::http::HeaderValue> {
+    let port = bound_addr.port();
+    [
+        format!("http://127.0.0.1:{port}"),
+        format!("http://localhost:{port}"),
+        format!("http://[::1]:{port}"),
+    ]
+    .into_iter()
+    .filter_map(|origin| origin.parse().ok())
+    .collect()
+}
+
 async fn chat_events_handler(
     State(state): State<Arc<GatewayState>>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
@@ -561,7 +566,7 @@ async fn chat_ws_handler(
             )
         })?;
 
-    if !is_allowed_ws_origin(origin) {
+    if !is_allowed_ws_origin(origin, state.bound_addr) {
         return Err((
             StatusCode::FORBIDDEN,
             "WebSocket origin not allowed".to_string(),
@@ -570,7 +575,7 @@ async fn chat_ws_handler(
     Ok(ws.on_upgrade(move |socket| crate::channels::web::ws::handle_ws_connection(socket, state)))
 }
 
-fn is_allowed_ws_origin(origin: &str) -> bool {
+fn is_allowed_ws_origin(origin: &str, bound_addr: SocketAddr) -> bool {
     let Ok(parsed) = Url::parse(origin) else {
         return false;
     };
@@ -579,7 +584,17 @@ fn is_allowed_ws_origin(origin: &str) -> bool {
         return false;
     }
 
-    matches!(parsed.host_str(), Some("localhost" | "127.0.0.1" | "::1"))
+    let host = parsed.host_str().unwrap_or_default();
+    let is_loopback_host = matches!(host, "localhost" | "127.0.0.1" | "::1");
+    if !is_loopback_host {
+        return false;
+    }
+
+    // If the origin provides an explicit port, require it to match the bound
+    // gateway port to avoid cross-port WebSocket hijacking from a different app.
+    parsed
+        .port_or_known_default()
+        .is_none_or(|port| port == bound_addr.port())
 }
 
 #[derive(Deserialize)]
@@ -2260,18 +2275,36 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_allowed_http_origins_for_gateway() {
+        let addr: SocketAddr = "127.0.0.1:3000".parse().unwrap();
+        let origins = allowed_http_origins_for_gateway(addr);
+        assert_eq!(origins.len(), 3);
+        assert!(origins.iter().any(|v| v == "http://127.0.0.1:3000"));
+        assert!(origins.iter().any(|v| v == "http://localhost:3000"));
+        assert!(origins.iter().any(|v| v == "http://[::1]:3000"));
+    }
+
+    #[test]
     fn test_is_allowed_ws_origin_local_hosts() {
-        assert!(is_allowed_ws_origin("http://localhost:3000"));
-        assert!(is_allowed_ws_origin("https://127.0.0.1"));
-        assert!(is_allowed_ws_origin("http://[::1]:8080"));
+        let addr: SocketAddr = "127.0.0.1:3000".parse().unwrap();
+        assert!(is_allowed_ws_origin("http://localhost:3000", addr));
+        assert!(is_allowed_ws_origin("https://127.0.0.1:3000", addr));
+        assert!(!is_allowed_ws_origin("http://[::1]:8080", addr));
     }
 
     #[test]
     fn test_is_allowed_ws_origin_rejects_non_local_or_malformed() {
-        assert!(!is_allowed_ws_origin("http://localhost.evil.com"));
-        assert!(!is_allowed_ws_origin("https://evil.com"));
-        assert!(!is_allowed_ws_origin("null"));
-        assert!(!is_allowed_ws_origin("file:///tmp/index.html"));
+        let addr: SocketAddr = "127.0.0.1:3000".parse().unwrap();
+        assert!(!is_allowed_ws_origin("http://localhost.evil.com", addr));
+        assert!(!is_allowed_ws_origin("https://evil.com", addr));
+        assert!(!is_allowed_ws_origin("null", addr));
+        assert!(!is_allowed_ws_origin("file:///tmp/index.html", addr));
+    }
+
+    #[test]
+    fn test_is_allowed_ws_origin_rejects_wrong_port() {
+        let addr: SocketAddr = "127.0.0.1:3000".parse().unwrap();
+        assert!(!is_allowed_ws_origin("http://localhost:5173", addr));
     }
 
     #[test]
