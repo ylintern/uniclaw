@@ -268,10 +268,10 @@ pub async fn start_server(
     // origins are allowed, since the gateway is a local-first service.
     let cors = CorsLayer::new()
         .allow_origin([
-            format!("http://{}:{}", addr.ip(), addr.port())
+            format!("http://{}:{}", bound_addr.ip(), bound_addr.port())
                 .parse()
                 .expect("valid origin"),
-            format!("http://localhost:{}", addr.port())
+            format!("http://localhost:{}", bound_addr.port())
                 .parse()
                 .expect("valid origin"),
         ])
