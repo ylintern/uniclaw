@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="unnamed.png" alt="Uniclaw" width="200"/>
+  <img src="unnamed.jpg" alt="Uniclaw" width="200"/>
 </p>
 
 <h1 align="center">Uniclaw</h1>
