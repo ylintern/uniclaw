@@ -22,6 +22,7 @@ use serde::Deserialize;
 use tokio::sync::{mpsc, oneshot};
 use tokio_stream::StreamExt;
 use tower_http::cors::{AllowHeaders, CorsLayer};
+use url::Url;
 use uuid::Uuid;
 
 use crate::agent::SessionManager;
@@ -560,23 +561,25 @@ async fn chat_ws_handler(
             )
         })?;
 
-    // Extract the host from the origin and compare exactly, so that
-    // crafted origins like "http://localhost.evil.com" are rejected.
-    // Origin format is "scheme://host[:port]".
-    let host = origin
-        .strip_prefix("http://")
-        .or_else(|| origin.strip_prefix("https://"))
-        .and_then(|rest| rest.split(':').next()?.split('/').next())
-        .unwrap_or("");
-
-    let is_local = matches!(host, "localhost" | "127.0.0.1" | "[::1]");
-    if !is_local {
+    if !is_allowed_ws_origin(origin) {
         return Err((
             StatusCode::FORBIDDEN,
             "WebSocket origin not allowed".to_string(),
         ));
     }
     Ok(ws.on_upgrade(move |socket| crate::channels::web::ws::handle_ws_connection(socket, state)))
+}
+
+fn is_allowed_ws_origin(origin: &str) -> bool {
+    let Ok(parsed) = Url::parse(origin) else {
+        return false;
+    };
+
+    if !matches!(parsed.scheme(), "http" | "https") {
+        return false;
+    }
+
+    matches!(parsed.host_str(), Some("localhost" | "127.0.0.1" | "::1"))
 }
 
 #[derive(Deserialize)]
@@ -2255,6 +2258,21 @@ struct GatewayStatusResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_is_allowed_ws_origin_local_hosts() {
+        assert!(is_allowed_ws_origin("http://localhost:3000"));
+        assert!(is_allowed_ws_origin("https://127.0.0.1"));
+        assert!(is_allowed_ws_origin("http://[::1]:8080"));
+    }
+
+    #[test]
+    fn test_is_allowed_ws_origin_rejects_non_local_or_malformed() {
+        assert!(!is_allowed_ws_origin("http://localhost.evil.com"));
+        assert!(!is_allowed_ws_origin("https://evil.com"));
+        assert!(!is_allowed_ws_origin("null"));
+        assert!(!is_allowed_ws_origin("file:///tmp/index.html"));
+    }
 
     #[test]
     fn test_build_turns_from_db_messages_complete() {
