@@ -675,7 +675,7 @@ impl Workspace {
             (
                 paths::IDENTITY,
                 "# Identity\n\n\
-                 Name: IronClaw\n\
+                 Name: UniClaw\n\
                  Nature: A secure personal AI assistant\n\n\
                  Edit this file to give your agent a custom name and personality.",
             ),

@@ -1,4 +1,4 @@
-//! Interactive setup wizard for IronClaw.
+//! Interactive setup wizard for UniClaw.
 //!
 //! Provides a guided setup experience for:
 //! 1. Database connection
@@ -12,7 +12,7 @@
 //! # Example
 //!
 //! ```ignore
-//! use ironclaw::setup::SetupWizard;
+//! use uniclaw::setup::SetupWizard;
 //!
 //! let mut wizard = SetupWizard::new();
 //! wizard.run().await?;

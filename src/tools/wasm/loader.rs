@@ -8,7 +8,7 @@
 //! # Example: Loading from Directory
 //!
 //! ```text
-//! ~/.ironclaw/tools/
+//! ~/.uniclaw/tools/
 //! ├── slack.wasm
 //! ├── slack.capabilities.json
 //! ├── github.wasm
@@ -17,7 +17,7 @@
 //!
 //! ```ignore
 //! let loader = WasmToolLoader::new(runtime, registry);
-//! loader.load_from_dir(Path::new("~/.ironclaw/tools/")).await?;
+//! loader.load_from_dir(Path::new("~/.uniclaw/tools/")).await?;
 //! ```
 //!
 //! # Dev Mode
@@ -386,10 +386,10 @@ const CARGO_MANIFEST_DIR: &str = env!("CARGO_MANIFEST_DIR");
 /// Resolve the tools source directory.
 ///
 /// Checks (in order):
-/// 1. `IRONCLAW_TOOLS_SRC` env var
+/// 1. `UNICLAW_TOOLS_SRC` env var
 /// 2. `<CARGO_MANIFEST_DIR>/tools-src/` (dev builds)
 fn tools_src_dir() -> PathBuf {
-    if let Ok(dir) = std::env::var("IRONCLAW_TOOLS_SRC") {
+    if let Ok(dir) = std::env::var("UNICLAW_TOOLS_SRC") {
         return PathBuf::from(dir);
     }
     PathBuf::from(CARGO_MANIFEST_DIR).join("tools-src")
@@ -455,10 +455,10 @@ pub async fn discover_dev_tools() -> Result<HashMap<String, DiscoveredTool>, std
 /// Load WASM tools from build artifacts in `tools-src/`.
 ///
 /// In dev mode, tools can be loaded directly from their build output without
-/// needing to install them to `~/.ironclaw/tools/` first. Build artifacts
+/// needing to install them to `~/.uniclaw/tools/` first. Build artifacts
 /// that are newer than installed copies take priority.
 ///
-/// Set `IRONCLAW_TOOLS_SRC` env var to override the source directory.
+/// Set `UNICLAW_TOOLS_SRC` env var to override the source directory.
 pub async fn load_dev_tools(
     loader: &WasmToolLoader,
     install_dir: &Path,

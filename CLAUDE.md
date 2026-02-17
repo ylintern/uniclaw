@@ -1,8 +1,8 @@
-# IronClaw Development Guide
+# UniClaw Development Guide
 
 ## Project Overview
 
-**IronClaw** is a secure personal AI assistant that protects your data and expands its capabilities on the fly.
+**UniClaw** is a secure personal AI assistant that protects your data and expands its capabilities on the fly.
 
 ### Core Philosophy
 - **User-first security** - Your data stays yours, encrypted and local
@@ -39,7 +39,7 @@ cargo test
 cargo test test_name
 
 # Run with logging
-RUST_LOG=ironclaw=debug cargo run
+RUST_LOG=uniclaw=debug cargo run
 ```
 
 ## Project Structure
@@ -258,8 +258,8 @@ Environment variables (see `.env.example`):
 ```bash
 # Database backend (default: postgres)
 DATABASE_BACKEND=postgres               # or "libsql" / "turso"
-DATABASE_URL=postgres://user:pass@localhost/ironclaw
-LIBSQL_PATH=~/.ironclaw/ironclaw.db    # libSQL local path (default)
+DATABASE_URL=postgres://user:pass@localhost/uniclaw
+LIBSQL_PATH=~/.uniclaw/uniclaw.db    # libSQL local path (default)
 # LIBSQL_URL=libsql://xxx.turso.io    # Turso cloud (optional)
 # LIBSQL_AUTH_TOKEN=xxx                # Required with LIBSQL_URL
 
@@ -269,7 +269,7 @@ NEARAI_MODEL=claude-3-5-sonnet-20241022
 NEARAI_BASE_URL=https://private.near.ai
 
 # Agent settings
-AGENT_NAME=ironclaw
+AGENT_NAME=uniclaw
 MAX_PARALLEL_JOBS=5
 
 # Embeddings (for semantic memory search)
@@ -294,7 +294,7 @@ GATEWAY_USER_ID=default
 
 # Docker sandbox
 SANDBOX_ENABLED=true
-SANDBOX_IMAGE=ironclaw-worker:latest
+SANDBOX_IMAGE=uniclaw-worker:latest
 SANDBOX_MEMORY_LIMIT_MB=512
 SANDBOX_TIMEOUT_SECS=1800
 
@@ -321,7 +321,7 @@ Session tokens have the format `sess_xxx` (37 characters). They are authenticate
 
 ## Database
 
-IronClaw supports two database backends, selected at compile time via Cargo feature flags and at runtime via the `DATABASE_BACKEND` environment variable.
+UniClaw supports two database backends, selected at compile time via Cargo feature flags and at runtime via the `DATABASE_BACKEND` environment variable.
 
 **IMPORTANT: All new features that touch persistence MUST support both backends.** Implement the operation as a method on the `Database` trait in `src/db/mod.rs`, then add the implementation in both `src/db/postgres.rs` (delegate to Store/Repository) and `src/db/libsql_backend.rs` (native SQL).
 
@@ -393,10 +393,10 @@ Both backends implement this trait. PostgreSQL delegates to the existing `Store`
 DATABASE_BACKEND=libsql
 
 # PostgreSQL
-DATABASE_URL=postgres://user:pass@localhost/ironclaw
+DATABASE_URL=postgres://user:pass@localhost/uniclaw
 
 # libSQL (embedded)
-LIBSQL_PATH=~/.ironclaw/ironclaw.db    # Default path
+LIBSQL_PATH=~/.uniclaw/uniclaw.db    # Default path
 
 # libSQL (Turso cloud sync)
 LIBSQL_URL=libsql://your-db.turso.io
@@ -493,7 +493,7 @@ WASM tools are the preferred way to add new capabilities. They run in a sandboxe
 2. Implement the WIT interface (`wit/tool.wit`)
 3. Create `<name>.capabilities.json` declaring required permissions
 4. Build with `cargo build --target wasm32-wasip2 --release`
-5. Install with `ironclaw tool install path/to/tool.wasm`
+5. Install with `uniclaw tool install path/to/tool.wasm`
 
 See `tools-src/` for examples.
 
@@ -569,7 +569,7 @@ For services without OAuth or when OAuth isn't configured:
 
 #### Auth Flow Priority
 
-When running `ironclaw tool auth <tool>`:
+When running `uniclaw tool auth <tool>`:
 
 1. Check `env_var` - if set in environment, use it directly
 2. Check `oauth` - if configured, open browser for OAuth flow
@@ -579,9 +579,9 @@ The agent reads auth config from the tool's capabilities file and provides the a
 
 ### WASM Tools vs MCP Servers: When to Use Which
 
-Both are first-class in the extension system (`ironclaw tool install` handles both), but they have different strengths.
+Both are first-class in the extension system (`uniclaw tool install` handles both), but they have different strengths.
 
-**WASM Tools (IronClaw native)**
+**WASM Tools (UniClaw native)**
 
 - Sandboxed: fuel metering, memory limits, no access except what's allowlisted
 - Credentials injected by host runtime, tool code never sees the actual token
@@ -595,7 +595,7 @@ Both are first-class in the extension system (`ironclaw tool install` handles bo
 - Growing ecosystem of pre-built servers (GitHub, Notion, Postgres, etc.)
 - Any language (TypeScript/Python most common)
 - Can do websockets, streaming, background polling
-- Cost: external process with full system access (no sandbox), manages own credentials, IronClaw can't prevent leaks
+- Cost: external process with full system access (no sandbox), manages own credentials, UniClaw can't prevent leaks
 
 **Decision guide:**
 
@@ -621,13 +621,13 @@ The LLM-facing interface is identical for both (tool name, schema, execute), so 
 
 ```bash
 # Verbose logging
-RUST_LOG=ironclaw=trace cargo run
+RUST_LOG=uniclaw=trace cargo run
 
 # Just the agent module
-RUST_LOG=ironclaw::agent=debug cargo run
+RUST_LOG=uniclaw::agent=debug cargo run
 
 # With HTTP request logging
-RUST_LOG=ironclaw=debug,tower_http=debug cargo run
+RUST_LOG=uniclaw=debug,tower_http=debug cargo run
 ```
 
 ## Module Specifications

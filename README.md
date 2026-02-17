@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="ironclaw.png" alt="Uniclaw" width="200"/>
+  <img src="uniclaw.png" alt="Uniclaw" width="200"/>
 </p>
 
 <h1 align="center">Uniclaw</h1>
@@ -32,9 +32,7 @@ In a world where AI systems are increasingly opaque about data handling and alig
 
 Uniclaw is the AI assistant you can actually trust with your personal and professional life.
 
-## Important legacy documentation from IronClaw
-
-This repository originated as **IronClaw**. Some docs, commands, env vars, and artifact names still use `ironclaw` while migration is ongoing.
+## Important documentation
 
 Please keep and use these docs—they are still important:
 
@@ -43,7 +41,7 @@ Please keep and use these docs—they are still important:
 - `docs/BUILDING_CHANNELS.md` and channel source docs
 - `CHANGELOG.md` for release and migration history
 
-When in doubt, prefer the behavior/spec in those files even if naming is still legacy.
+When in doubt, prefer the behavior/spec in those files.
 
 ## Features
 
@@ -86,12 +84,12 @@ When in doubt, prefer the behavior/spec in those files even if naming is still l
 
 ## Download or Build
 
-Visit [Releases page](https://github.com/nearai/ironclaw/releases/) to see the latest updates.
+Visit [Releases page](https://github.com/nearai/uniclaw/releases/) to see the latest updates.
 
 <details>
   <summary>Install via Windows Installer (Windows)</summary>
 
-Download the [Windows Installer](https://github.com/nearai/ironclaw/releases/latest/download/ironclaw-x86_64-pc-windows-msvc.msi) and run it.
+Download the [Windows Installer](https://github.com/nearai/uniclaw/releases/latest/download/uniclaw-x86_64-pc-windows-msvc.msi) and run it.
 
 </details>
 
@@ -99,7 +97,7 @@ Download the [Windows Installer](https://github.com/nearai/ironclaw/releases/lat
   <summary>Install via powershell script (Windows)</summary>
 
 ```sh
-irm https://github.com/nearai/ironclaw/releases/latest/download/ironclaw-installer.ps1 | iex
+irm https://github.com/nearai/uniclaw/releases/latest/download/uniclaw-installer.ps1 | iex
 ```
 
 </details>
@@ -108,7 +106,7 @@ irm https://github.com/nearai/ironclaw/releases/latest/download/ironclaw-install
   <summary>Install via shell script (macOS, Linux, Windows/WSL)</summary>
 
 ```sh
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/nearai/ironclaw/releases/latest/download/ironclaw-installer.sh | sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/nearai/uniclaw/releases/latest/download/uniclaw-installer.sh | sh
 ```
 </details>
 
@@ -119,8 +117,8 @@ Install it with `cargo`, just make sure you have [Rust](https://rustup.rs) insta
 
 ```bash
 # Clone the repository
-git clone https://github.com/nearai/ironclaw.git
-cd ironclaw
+git clone https://github.com/nearai/uniclaw.git
+cd uniclaw
 
 # Build
 cargo build --release
@@ -137,10 +135,10 @@ For **full release** (after modifying channel sources), run `./scripts/build-all
 
 ```bash
 # Create database
-createdb ironclaw
+createdb uniclaw
 
 # Enable pgvector
-psql ironclaw -c "CREATE EXTENSION IF NOT EXISTS vector;"
+psql uniclaw -c "CREATE EXTENSION IF NOT EXISTS vector;"
 ```
 
 ## Configuration
@@ -148,12 +146,12 @@ psql ironclaw -c "CREATE EXTENSION IF NOT EXISTS vector;"
 Run the setup wizard to configure Uniclaw:
 
 ```bash
-ironclaw onboard
+uniclaw onboard
 ```
 
 The wizard handles database connection, NEAR AI authentication (via browser OAuth),
 and secrets encryption (using your system keychain). All settings are saved to
-`~/.ironclaw/settings.toml`.
+`~/.uniclaw/settings.toml`.
 
 ## Security
 
@@ -250,14 +248,14 @@ External content passes through multiple security layers:
 
 ```bash
 # First-time setup (configures database, auth, etc.)
-# NOTE: binary name is still `ironclaw` in current builds.
-ironclaw onboard
+# NOTE: binary name is still `uniclaw` in current builds.
+uniclaw onboard
 
 # Start interactive REPL
 cargo run
 
 # With debug logging
-RUST_LOG=ironclaw=debug cargo run
+RUST_LOG=uniclaw=debug cargo run
 ```
 
 ## Development
@@ -270,7 +268,7 @@ cargo fmt
 cargo clippy --all --benches --tests --examples --all-features
 
 # Run tests
-createdb ironclaw_test
+createdb uniclaw_test
 cargo test
 
 # Run specific test
@@ -282,7 +280,7 @@ cargo test test_name
 
 ## OpenClaw Heritage
 
-IronClaw is a Rust reimplementation inspired by [OpenClaw](https://github.com/openclaw/openclaw). See [FEATURE_PARITY.md](FEATURE_PARITY.md) for the complete tracking matrix.
+UniClaw is a Rust reimplementation inspired by [OpenClaw](https://github.com/openclaw/openclaw). See [FEATURE_PARITY.md](FEATURE_PARITY.md) for the complete tracking matrix.
 
 Key differences:
 

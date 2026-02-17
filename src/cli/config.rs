@@ -197,7 +197,7 @@ fn show_path(has_db: bool) -> anyhow::Result<()> {
     }
     println!(
         "Env config:         {}",
-        crate::bootstrap::ironclaw_env_path().display()
+        crate::bootstrap::uniclaw_env_path().display()
     );
 
     Ok(())
@@ -228,6 +228,6 @@ mod tests {
 
         // Reset to default
         settings.reset("agent.name").unwrap();
-        assert_eq!(settings.agent.name, "ironclaw");
+        assert_eq!(settings.agent.name, "uniclaw");
     }
 }

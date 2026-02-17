@@ -325,17 +325,17 @@ impl CreateJobTool {
 fn projects_base() -> PathBuf {
     dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(".ironclaw")
+        .join(".uniclaw")
         .join("projects")
 }
 
 /// Resolve the project directory, creating it if it doesn't exist.
 ///
-/// Auto-creates `~/.ironclaw/projects/{project_id}/` so every sandbox job has a
+/// Auto-creates `~/.uniclaw/projects/{project_id}/` so every sandbox job has a
 /// persistent bind mount that survives container teardown.
 ///
 /// When an explicit path is provided (e.g. job restarts reusing the old dir),
-/// it is validated to fall within `~/.ironclaw/projects/` after canonicalization.
+/// it is validated to fall within `~/.uniclaw/projects/` after canonicalization.
 fn resolve_project_dir(
     explicit: Option<PathBuf>,
     project_id: Uuid,
@@ -429,7 +429,7 @@ impl Tool for CreateJobTool {
                     "mode": {
                         "type": "string",
                         "enum": ["worker", "claude_code"],
-                        "description": "Execution mode. 'worker' (default) uses the IronClaw sub-agent. \
+                        "description": "Execution mode. 'worker' (default) uses the UniClaw sub-agent. \
                                         'claude_code' uses Claude Code CLI for full agentic software engineering."
                     }
                 },

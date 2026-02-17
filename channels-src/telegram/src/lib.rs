@@ -1,7 +1,7 @@
 // Telegram API types have fields reserved for future use (entities, reply threading, etc.)
 #![allow(dead_code)]
 
-//! Telegram Bot API channel for IronClaw.
+//! Telegram Bot API channel for UniClaw.
 //!
 //! This WASM component implements the channel interface for handling Telegram
 //! webhooks and sending messages back via the Bot API.
@@ -834,7 +834,7 @@ fn send_pairing_reply(chat_id: i64, code: &str) -> Result<(), String> {
     let payload = serde_json::json!({
         "chat_id": chat_id,
         "text": format!(
-            "To pair with this bot, run: `ironclaw pairing approve telegram {}`",
+            "To pair with this bot, run: `uniclaw pairing approve telegram {}`",
             code
         ),
         "parse_mode": "Markdown",

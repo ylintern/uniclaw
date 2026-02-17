@@ -1,34 +1,34 @@
-//! Bootstrap helpers for IronClaw.
+//! Bootstrap helpers for UniClaw.
 //!
 //! The only setting that truly needs disk persistence before the database is
 //! available is `DATABASE_URL` (chicken-and-egg: can't connect to DB without
 //! it). Everything else is auto-detected or read from env vars.
 //!
-//! File: `~/.ironclaw/.env` (standard dotenvy format)
+//! File: `~/.uniclaw/.env` (standard dotenvy format)
 
 use std::path::PathBuf;
 
-/// Path to the IronClaw-specific `.env` file: `~/.ironclaw/.env`.
-pub fn ironclaw_env_path() -> PathBuf {
+/// Path to the UniClaw-specific `.env` file: `~/.uniclaw/.env`.
+pub fn uniclaw_env_path() -> PathBuf {
     dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(".ironclaw")
+        .join(".uniclaw")
         .join(".env")
 }
 
-/// Load env vars from `~/.ironclaw/.env` (in addition to the standard `.env`).
+/// Load env vars from `~/.uniclaw/.env` (in addition to the standard `.env`).
 ///
 /// Call this **after** `dotenvy::dotenv()` so that the standard `./.env`
-/// takes priority over `~/.ironclaw/.env`. dotenvy never overwrites
+/// takes priority over `~/.uniclaw/.env`. dotenvy never overwrites
 /// existing env vars, so the effective priority is:
 ///
-///   explicit env vars > `./.env` > `~/.ironclaw/.env`
+///   explicit env vars > `./.env` > `~/.uniclaw/.env`
 ///
-/// If `~/.ironclaw/.env` doesn't exist but the legacy `bootstrap.json` does,
+/// If `~/.uniclaw/.env` doesn't exist but the legacy `bootstrap.json` does,
 /// extracts `DATABASE_URL` from it and writes the `.env` file (one-time
 /// upgrade from the old config format).
-pub fn load_ironclaw_env() {
-    let path = ironclaw_env_path();
+pub fn load_uniclaw_env() {
+    let path = uniclaw_env_path();
 
     if !path.exists() {
         // One-time upgrade: extract DATABASE_URL from legacy bootstrap.json
@@ -42,10 +42,10 @@ pub fn load_ironclaw_env() {
 
 /// If `bootstrap.json` exists, pull `database_url` out of it and write `.env`.
 fn migrate_bootstrap_json_to_env(env_path: &std::path::Path) {
-    let ironclaw_dir = env_path
+    let uniclaw_dir = env_path
         .parent()
         .unwrap_or_else(|| std::path::Path::new("."));
-    let bootstrap_path = ironclaw_dir.join("bootstrap.json");
+    let bootstrap_path = uniclaw_dir.join("bootstrap.json");
 
     if !bootstrap_path.exists() {
         return;
@@ -81,7 +81,7 @@ fn migrate_bootstrap_json_to_env(env_path: &std::path::Path) {
     }
 }
 
-/// Write database bootstrap vars to `~/.ironclaw/.env`.
+/// Write database bootstrap vars to `~/.uniclaw/.env`.
 ///
 /// These settings form the chicken-and-egg layer: they must be available
 /// from the filesystem (env vars) BEFORE any database connection, because
@@ -92,7 +92,7 @@ fn migrate_bootstrap_json_to_env(env_path: &std::path::Path) {
 /// Values are double-quoted so that `#` (common in URL-encoded passwords)
 /// and other shell-special characters are preserved by dotenvy.
 pub fn save_bootstrap_env(vars: &[(&str, &str)]) -> std::io::Result<()> {
-    let path = ironclaw_env_path();
+    let path = uniclaw_env_path();
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
     }
@@ -103,7 +103,7 @@ pub fn save_bootstrap_env(vars: &[(&str, &str)]) -> std::io::Result<()> {
     std::fs::write(&path, content)
 }
 
-/// Write `DATABASE_URL` to `~/.ironclaw/.env`.
+/// Write `DATABASE_URL` to `~/.uniclaw/.env`.
 ///
 /// Convenience wrapper around `save_bootstrap_env` for single-value migration
 /// paths. Prefer `save_bootstrap_env` for new code.
@@ -111,7 +111,7 @@ pub fn save_database_url(url: &str) -> std::io::Result<()> {
     save_bootstrap_env(&[("DATABASE_URL", url)])
 }
 
-/// One-time migration of legacy `~/.ironclaw/settings.json` into the database.
+/// One-time migration of legacy `~/.uniclaw/settings.json` into the database.
 ///
 /// Only runs when a `settings.json` exists on disk AND the DB has no settings
 /// yet. After the wizard writes directly to the DB, this path is only hit by
@@ -122,10 +122,10 @@ pub async fn migrate_disk_to_db(
     store: &dyn crate::db::Database,
     user_id: &str,
 ) -> Result<(), MigrationError> {
-    let ironclaw_dir = dirs::home_dir()
+    let uniclaw_dir = dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(".ironclaw");
-    let legacy_settings_path = ironclaw_dir.join("settings.json");
+        .join(".uniclaw");
+    let legacy_settings_path = uniclaw_dir.join("settings.json");
 
     if !legacy_settings_path.exists() {
         tracing::debug!("No legacy settings.json found, skipping disk-to-DB migration");
@@ -158,15 +158,15 @@ pub async fn migrate_disk_to_db(
         tracing::info!("Migrated {} settings to database", db_map.len());
     }
 
-    // 2. Write DATABASE_URL to ~/.ironclaw/.env
+    // 2. Write DATABASE_URL to ~/.uniclaw/.env
     if let Some(ref url) = settings.database_url {
         save_database_url(url)
             .map_err(|e| MigrationError::Io(format!("Failed to write .env: {}", e)))?;
-        tracing::info!("Wrote DATABASE_URL to {}", ironclaw_env_path().display());
+        tracing::info!("Wrote DATABASE_URL to {}", uniclaw_env_path().display());
     }
 
     // 3. Migrate mcp-servers.json if it exists
-    let mcp_path = ironclaw_dir.join("mcp-servers.json");
+    let mcp_path = uniclaw_dir.join("mcp-servers.json");
     if mcp_path.exists() {
         match std::fs::read_to_string(&mcp_path) {
             Ok(content) => match serde_json::from_str::<serde_json::Value>(&content) {
@@ -199,7 +199,7 @@ pub async fn migrate_disk_to_db(
     // Session bearer tokens are intentionally not migrated into DB settings.
     // Keep migration marker behavior for compatibility, but avoid copying
     // potentially sensitive token material into plaintext settings storage.
-    let session_path = ironclaw_dir.join("session.json");
+    let session_path = uniclaw_dir.join("session.json");
     if session_path.exists() {
         tracing::info!(
             "Found legacy session.json; skipping DB migration for security and marking as migrated"
@@ -211,7 +211,7 @@ pub async fn migrate_disk_to_db(
     rename_to_migrated(&legacy_settings_path);
 
     // 6. Clean up old bootstrap.json if it exists (superseded by .env)
-    let old_bootstrap = ironclaw_dir.join("bootstrap.json");
+    let old_bootstrap = uniclaw_dir.join("bootstrap.json");
     if old_bootstrap.exists() {
         rename_to_migrated(&old_bootstrap);
         tracing::info!("Renamed old bootstrap.json to .migrated");
@@ -250,14 +250,14 @@ mod tests {
         let env_path = dir.path().join(".env");
 
         // Write in the quoted format that save_database_url uses
-        let url = "postgres://localhost:5432/ironclaw_test";
+        let url = "postgres://localhost:5432/uniclaw_test";
         std::fs::write(&env_path, format!("DATABASE_URL=\"{}\"\n", url)).unwrap();
 
         // Verify the content is a valid dotenv line (quoted)
         let content = std::fs::read_to_string(&env_path).unwrap();
         assert_eq!(
             content,
-            "DATABASE_URL=\"postgres://localhost:5432/ironclaw_test\"\n"
+            "DATABASE_URL=\"postgres://localhost:5432/uniclaw_test\"\n"
         );
 
         // Verify dotenvy can parse it (strips quotes automatically)
@@ -277,7 +277,7 @@ mod tests {
 
         // URLs with # in the password are common (URL-encoded special chars).
         // Without quoting, dotenvy treats # as a comment delimiter.
-        let url = "postgres://user:p%23ss@localhost:5432/ironclaw";
+        let url = "postgres://user:p%23ss@localhost:5432/uniclaw";
         std::fs::write(&env_path, format!("DATABASE_URL=\"{}\"\n", url)).unwrap();
 
         let parsed: Vec<(String, String)> = dotenvy::from_path_iter(&env_path)
@@ -308,9 +308,9 @@ mod tests {
     }
 
     #[test]
-    fn test_ironclaw_env_path() {
-        let path = ironclaw_env_path();
-        assert!(path.ends_with(".ironclaw/.env"));
+    fn test_uniclaw_env_path() {
+        let path = uniclaw_env_path();
+        assert!(path.ends_with(".uniclaw/.env"));
     }
 
     #[test]
@@ -321,7 +321,7 @@ mod tests {
 
         // Write a legacy bootstrap.json
         let bootstrap_json = serde_json::json!({
-            "database_url": "postgres://localhost/ironclaw_upgrade",
+            "database_url": "postgres://localhost/uniclaw_upgrade",
             "database_pool_size": 5,
             "secrets_master_key_source": "keychain",
             "onboard_completed": true
@@ -343,7 +343,7 @@ mod tests {
         let content = std::fs::read_to_string(&env_path).unwrap();
         assert_eq!(
             content,
-            "DATABASE_URL=\"postgres://localhost/ironclaw_upgrade\"\n"
+            "DATABASE_URL=\"postgres://localhost/uniclaw_upgrade\"\n"
         );
 
         // bootstrap.json should be renamed to .migrated
@@ -396,7 +396,7 @@ mod tests {
 
         let vars = [
             ("DATABASE_BACKEND", "libsql"),
-            ("LIBSQL_PATH", "/home/user/.ironclaw/ironclaw.db"),
+            ("LIBSQL_PATH", "/home/user/.uniclaw/uniclaw.db"),
         ];
 
         // Write manually to the temp path (save_bootstrap_env uses the global path)
@@ -420,7 +420,7 @@ mod tests {
             parsed[1],
             (
                 "LIBSQL_PATH".to_string(),
-                "/home/user/.ironclaw/ironclaw.db".to_string()
+                "/home/user/.uniclaw/uniclaw.db".to_string()
             )
         );
     }

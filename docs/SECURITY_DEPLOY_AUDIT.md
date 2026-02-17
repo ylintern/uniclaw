@@ -27,7 +27,7 @@ Date: 2026-02-15
 1. **Repository plaintext credential leakage**
    - `USER.md` now uses placeholders / variable references instead of literal secrets.
 2. **NEAR AI session token plaintext at rest**
-   - Session tokens are now encrypted before disk persistence in `~/.ironclaw/session.json`.
+   - Session tokens are now encrypted before disk persistence in `~/.uniclaw/session.json`.
    - Legacy plaintext session files are read for compatibility and auto-migrated to encrypted format.
 3. **Session token stored in DB settings**
    - Session persistence to `settings` (`nearai.session_token`) has been removed.

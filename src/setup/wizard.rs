@@ -69,7 +69,7 @@ pub struct SetupConfig {
     pub channels_only: bool,
 }
 
-/// Interactive setup wizard for IronClaw.
+/// Interactive setup wizard for UniClaw.
 pub struct SetupWizard {
     config: SetupConfig,
     settings: Settings,
@@ -125,7 +125,7 @@ impl SetupWizard {
 
     /// Run the setup wizard.
     pub async fn run(&mut self) -> Result<(), SetupError> {
-        print_header("IronClaw Setup Wizard");
+        print_header("UniClaw Setup Wizard");
 
         if self.config.channels_only {
             // Channels-only mode: just step 6
@@ -346,7 +346,7 @@ impl SetupWizard {
         }
 
         println!();
-        print_info("IronClaw uses an embedded SQLite database (libSQL).");
+        print_info("UniClaw uses an embedded SQLite database (libSQL).");
         print_info("No external database server required.");
         println!();
 
@@ -1266,7 +1266,7 @@ impl SetupWizard {
         // Discover available WASM channels
         let channels_dir = dirs::home_dir()
             .ok_or_else(|| SetupError::Config("Could not determine home directory".into()))?
-            .join(".ironclaw/channels");
+            .join(".uniclaw/channels");
 
         let mut discovered_channels = discover_wasm_channels(&channels_dir).await;
         let installed_names: HashSet<String> = discovered_channels
@@ -1447,7 +1447,7 @@ impl SetupWizard {
         Ok(())
     }
 
-    /// Save settings to the database and `~/.ironclaw/.env`, then print summary.
+    /// Save settings to the database and `~/.uniclaw/.env`, then print summary.
     async fn save_and_summarize(&mut self) -> Result<(), SetupError> {
         self.settings.onboard_completed = true;
 
@@ -1505,7 +1505,7 @@ impl SetupWizard {
             }
         }
 
-        // Persist database bootstrap vars to ~/.ironclaw/.env.
+        // Persist database bootstrap vars to ~/.uniclaw/.env.
         // These are the chicken-and-egg settings: we need them to decide
         // which database to connect to, so they can't live in the database.
         {
@@ -1639,11 +1639,11 @@ impl SetupWizard {
 
         println!();
         println!("To start the agent, run:");
-        println!("  ironclaw");
+        println!("  uniclaw");
         println!();
         println!("To change settings later:");
-        println!("  ironclaw config set <setting> <value>");
-        println!("  ironclaw onboard");
+        println!("  uniclaw config set <setting> <value>");
+        println!("  uniclaw onboard");
         println!();
 
         Ok(())
@@ -2176,7 +2176,7 @@ mod tests {
     #[tokio::test]
     async fn test_discover_wasm_channels_nonexistent_dir() {
         let channels =
-            discover_wasm_channels(std::path::Path::new("/tmp/ironclaw_nonexistent_dir")).await;
+            discover_wasm_channels(std::path::Path::new("/tmp/uniclaw_nonexistent_dir")).await;
         assert!(channels.is_empty());
     }
 

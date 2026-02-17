@@ -1,11 +1,11 @@
-//! IronClaw - Main entry point.
+//! UniClaw - Main entry point.
 
 use std::sync::Arc;
 
 use clap::Parser;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
-use ironclaw::{
+use uniclaw::{
     agent::{Agent, AgentDeps, SessionManager},
     channels::{
         ChannelManager, GatewayChannel, HttpChannel, ReplChannel, WebhookServer,
@@ -42,12 +42,12 @@ use ironclaw::{
 };
 
 #[cfg(feature = "libsql")]
-use ironclaw::secrets::LibSqlSecretsStore;
+use uniclaw::secrets::LibSqlSecretsStore;
 #[cfg(feature = "postgres")]
-use ironclaw::secrets::PostgresSecretsStore;
-use ironclaw::secrets::SecretsCrypto;
+use uniclaw::secrets::PostgresSecretsStore;
+use uniclaw::secrets::SecretsCrypto;
 #[cfg(any(feature = "postgres", feature = "libsql"))]
-use ironclaw::setup::{SetupConfig, SetupWizard};
+use uniclaw::setup::{SetupConfig, SetupWizard};
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
@@ -72,7 +72,7 @@ async fn main() -> anyhow::Result<()> {
                 )
                 .init();
 
-            return ironclaw::cli::run_config_command(config_cmd.clone()).await;
+            return uniclaw::cli::run_config_command(config_cmd.clone()).await;
         }
         Some(Command::Mcp(mcp_cmd)) => {
             // Simple logging for MCP commands
@@ -97,17 +97,17 @@ async fn main() -> anyhow::Result<()> {
                 .map_err(|e| anyhow::anyhow!("{}", e))?;
 
             // Set up embeddings if available
-            let session = ironclaw::llm::create_session_manager(ironclaw::llm::SessionConfig {
+            let session = uniclaw::llm::create_session_manager(uniclaw::llm::SessionConfig {
                 auth_base_url: config.llm.nearai.auth_base_url.clone(),
                 session_path: config.llm.nearai.session_path.clone(),
             })
             .await;
 
-            let embeddings: Option<Arc<dyn ironclaw::workspace::EmbeddingProvider>> =
+            let embeddings: Option<Arc<dyn uniclaw::workspace::EmbeddingProvider>> =
                 if config.embeddings.enabled {
                     match config.embeddings.provider.as_str() {
                         "nearai" => Some(Arc::new(
-                            ironclaw::workspace::NearAiEmbeddings::new(
+                            uniclaw::workspace::NearAiEmbeddings::new(
                                 &config.llm.nearai.base_url,
                                 session,
                             )
@@ -119,7 +119,7 @@ async fn main() -> anyhow::Result<()> {
                                     "text-embedding-3-large" => 3072,
                                     _ => 1536,
                                 };
-                                Some(Arc::new(ironclaw::workspace::OpenAiEmbeddings::with_model(
+                                Some(Arc::new(uniclaw::workspace::OpenAiEmbeddings::with_model(
                                     api_key,
                                     &config.embeddings.model,
                                     dim,
@@ -134,12 +134,12 @@ async fn main() -> anyhow::Result<()> {
                 };
 
             // Create a Database-trait-backed workspace for the memory command
-            let db: Arc<dyn ironclaw::db::Database> =
-                ironclaw::db::connect_from_config(&config.database)
+            let db: Arc<dyn uniclaw::db::Database> =
+                uniclaw::db::connect_from_config(&config.database)
                     .await
                     .map_err(|e| anyhow::anyhow!("{}", e))?;
 
-            return ironclaw::cli::run_memory_command_with_db(mem_cmd.clone(), db, embeddings)
+            return uniclaw::cli::run_memory_command_with_db(mem_cmd.clone(), db, embeddings)
                 .await;
         }
         Some(Command::Pairing(pairing_cmd)) => {
@@ -170,7 +170,7 @@ async fn main() -> anyhow::Result<()> {
             tracing_subscriber::fmt()
                 .with_env_filter(
                     EnvFilter::try_from_default_env()
-                        .unwrap_or_else(|_| EnvFilter::new("ironclaw=info")),
+                        .unwrap_or_else(|_| EnvFilter::new("uniclaw=info")),
                 )
                 .init();
 
@@ -180,14 +180,14 @@ async fn main() -> anyhow::Result<()> {
                 orchestrator_url
             );
 
-            let config = ironclaw::worker::runtime::WorkerConfig {
+            let config = uniclaw::worker::runtime::WorkerConfig {
                 job_id: *job_id,
                 orchestrator_url: orchestrator_url.clone(),
                 max_iterations: *max_iterations,
                 timeout: std::time::Duration::from_secs(600),
             };
 
-            let runtime = ironclaw::worker::WorkerRuntime::new(config)
+            let runtime = uniclaw::worker::WorkerRuntime::new(config)
                 .map_err(|e| anyhow::anyhow!("Worker init failed: {}", e))?;
 
             runtime
@@ -208,7 +208,7 @@ async fn main() -> anyhow::Result<()> {
             tracing_subscriber::fmt()
                 .with_env_filter(
                     EnvFilter::try_from_default_env()
-                        .unwrap_or_else(|_| EnvFilter::new("ironclaw=info")),
+                        .unwrap_or_else(|_| EnvFilter::new("uniclaw=info")),
                 )
                 .init();
 
@@ -219,7 +219,7 @@ async fn main() -> anyhow::Result<()> {
                 model
             );
 
-            let config = ironclaw::worker::claude_bridge::ClaudeBridgeConfig {
+            let config = uniclaw::worker::claude_bridge::ClaudeBridgeConfig {
                 job_id: *job_id,
                 orchestrator_url: orchestrator_url.clone(),
                 max_turns: *max_turns,
@@ -228,7 +228,7 @@ async fn main() -> anyhow::Result<()> {
                 allowed_tools: Vec::new(),
             };
 
-            let runtime = ironclaw::worker::ClaudeBridgeRuntime::new(config)
+            let runtime = uniclaw::worker::ClaudeBridgeRuntime::new(config)
                 .map_err(|e| anyhow::anyhow!("Claude bridge init failed: {}", e))?;
 
             runtime
@@ -243,9 +243,9 @@ async fn main() -> anyhow::Result<()> {
             channels_only,
         }) => {
             // Load .env files before running onboarding wizard.
-            // Standard ./.env first (higher priority), then ~/.ironclaw/.env.
+            // Standard ./.env first (higher priority), then ~/.uniclaw/.env.
             let _ = dotenvy::dotenv();
-            ironclaw::bootstrap::load_ironclaw_env();
+            uniclaw::bootstrap::load_uniclaw_env();
 
             #[cfg(any(feature = "postgres", feature = "libsql"))]
             {
@@ -270,9 +270,9 @@ async fn main() -> anyhow::Result<()> {
 
     // Load .env files early so DATABASE_URL (and any other vars) are
     // available to all subsequent env-based config resolution.
-    // Standard ./.env first (higher priority), then ~/.ironclaw/.env.
+    // Standard ./.env first (higher priority), then ~/.uniclaw/.env.
     let _ = dotenvy::dotenv();
-    ironclaw::bootstrap::load_ironclaw_env();
+    uniclaw::bootstrap::load_uniclaw_env();
 
     // Enhanced first-run detection
     #[cfg(any(feature = "postgres", feature = "libsql"))]
@@ -288,12 +288,12 @@ async fn main() -> anyhow::Result<()> {
     // Load initial config from env + disk (before DB is available)
     let mut config = match Config::from_env().await {
         Ok(c) => c,
-        Err(ironclaw::error::ConfigError::MissingRequired { key, hint }) => {
+        Err(uniclaw::error::ConfigError::MissingRequired { key, hint }) => {
             eprintln!("Configuration error: Missing required setting '{}'", key);
             eprintln!("  {}", hint);
             eprintln!();
             eprintln!(
-                "Run 'ironclaw onboard' to configure, or set the required environment variables."
+                "Run 'uniclaw onboard' to configure, or set the required environment variables."
             );
             std::process::exit(1);
         }
@@ -308,13 +308,13 @@ async fn main() -> anyhow::Result<()> {
     let session = create_session_manager(session_config).await;
 
     // Ensure we're authenticated before proceeding (only needed for NEAR AI backend)
-    if config.llm.backend == ironclaw::config::LlmBackend::NearAi {
+    if config.llm.backend == uniclaw::config::LlmBackend::NearAi {
         session.ensure_authenticated().await?;
     }
 
     // Initialize tracing
     let env_filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("ironclaw=info,tower_http=warn"));
+        .unwrap_or_else(|_| EnvFilter::new("uniclaw=info,tower_http=warn"));
 
     // Create log broadcaster before tracing init so the WebLogLayer can capture all events.
     // This gets wired to the gateway's /api/logs/events SSE endpoint later.
@@ -325,7 +325,7 @@ async fn main() -> anyhow::Result<()> {
         .with(
             tracing_subscriber::fmt::layer()
                 .with_target(false)
-                .with_writer(ironclaw::tracing_fmt::TruncatingStderr::default()),
+                .with_writer(uniclaw::tracing_fmt::TruncatingStderr::default()),
         )
         .with(WebLogLayer::new(Arc::clone(&log_broadcaster)))
         .init();
@@ -339,7 +339,7 @@ async fn main() -> anyhow::Result<()> {
         None
     };
 
-    tracing::info!("Starting IronClaw...");
+    tracing::info!("Starting UniClaw...");
     tracing::info!("Loaded configuration for agent: {}", config.agent.name);
     tracing::info!("LLM backend: {}", config.llm.backend);
 
@@ -349,7 +349,7 @@ async fn main() -> anyhow::Result<()> {
     // Backend is selected by the `DATABASE_BACKEND` env var / config.
     //
     // NOTE: For simpler call sites (CLI commands, Memory handler) use the shared
-    // helper `ironclaw::db::connect_from_config()`. This block is kept inline
+    // helper `uniclaw::db::connect_from_config()`. This block is kept inline
     // because it also captures backend-specific handles (`pg_pool`, `libsql_db`)
     // needed by the secrets store.
     #[cfg(feature = "postgres")]
@@ -357,18 +357,18 @@ async fn main() -> anyhow::Result<()> {
     #[cfg(feature = "libsql")]
     let mut libsql_db: Option<std::sync::Arc<libsql::Database>> = None;
 
-    let db: Option<Arc<dyn ironclaw::db::Database>> = if cli.no_db {
+    let db: Option<Arc<dyn uniclaw::db::Database>> = if cli.no_db {
         tracing::warn!("Running without database connection");
         None
     } else {
         match config.database.backend {
             #[cfg(feature = "libsql")]
-            ironclaw::config::DatabaseBackend::LibSql => {
-                use ironclaw::db::Database as _;
-                use ironclaw::db::libsql_backend::LibSqlBackend;
+            uniclaw::config::DatabaseBackend::LibSql => {
+                use uniclaw::db::Database as _;
+                use uniclaw::db::libsql_backend::LibSqlBackend;
                 use secrecy::ExposeSecret as _;
 
-                let default_path = ironclaw::config::default_libsql_path();
+                let default_path = uniclaw::config::default_libsql_path();
                 let db_path = config
                     .database
                     .libsql_path
@@ -389,12 +389,12 @@ async fn main() -> anyhow::Result<()> {
                 // Capture the Database handle for SecretsStore (connection-per-op)
                 libsql_db = Some(backend.shared_db());
 
-                Some(Arc::new(backend) as Arc<dyn ironclaw::db::Database>)
+                Some(Arc::new(backend) as Arc<dyn uniclaw::db::Database>)
             }
             #[cfg(feature = "postgres")]
             _ => {
-                use ironclaw::db::Database as _;
-                let pg = ironclaw::db::postgres::PgBackend::new(&config.database)
+                use uniclaw::db::Database as _;
+                let pg = uniclaw::db::postgres::PgBackend::new(&config.database)
                     .await
                     .map_err(|e| anyhow::anyhow!("{}", e))?;
                 pg.run_migrations()
@@ -403,7 +403,7 @@ async fn main() -> anyhow::Result<()> {
                 tracing::info!("PostgreSQL database connected and migrations applied");
 
                 pg_pool = Some(pg.pool());
-                Some(Arc::new(pg) as Arc<dyn ironclaw::db::Database>)
+                Some(Arc::new(pg) as Arc<dyn uniclaw::db::Database>)
             }
             #[cfg(not(feature = "postgres"))]
             _ => {
@@ -417,7 +417,7 @@ async fn main() -> anyhow::Result<()> {
     // Post-init operations using the database
     if let Some(ref db) = db {
         // One-time migration: move disk config files into the DB settings table.
-        if let Err(e) = ironclaw::bootstrap::migrate_disk_to_db(db.as_ref(), "default").await {
+        if let Err(e) = uniclaw::bootstrap::migrate_disk_to_db(db.as_ref(), "default").await {
             tracing::warn!("Disk-to-DB settings migration failed: {}", e);
         }
 
@@ -493,7 +493,7 @@ async fn main() -> anyhow::Result<()> {
     // up. Then re-resolve LlmConfig with the newly available keys (backend may
     // have been set during onboarding but the API key is in the secrets store).
     if let Some(ref secrets) = secrets_store {
-        ironclaw::config::inject_llm_keys_from_secrets(secrets.as_ref(), "default").await;
+        uniclaw::config::inject_llm_keys_from_secrets(secrets.as_ref(), "default").await;
 
         // Re-resolve LlmConfig now that secrets overlay has been populated
         if let Some(ref db_ref) = db {
@@ -632,7 +632,7 @@ async fn main() -> anyhow::Result<()> {
                 loader = loader.with_secrets_store(Arc::clone(secrets));
             }
 
-            // Load installed tools from ~/.ironclaw/tools/
+            // Load installed tools from ~/.uniclaw/tools/
             match loader.load_from_dir(&config.wasm.tools_dir).await {
                 Ok(results) => {
                     if !results.loaded.is_empty() {
@@ -673,7 +673,7 @@ async fn main() -> anyhow::Result<()> {
             let servers_result = if let Some(ref d) = db {
                 load_mcp_servers_from_db(d.as_ref(), "default").await
             } else {
-                ironclaw::tools::mcp::config::load_mcp_servers().await
+                uniclaw::tools::mcp::config::load_mcp_servers().await
             };
             match servers_result {
                 Ok(servers) => {
@@ -742,7 +742,7 @@ async fn main() -> anyhow::Result<()> {
                                     {
                                         tracing::warn!(
                                             "MCP server '{}' requires authentication. \
-                                             Run: ironclaw mcp auth {}",
+                                             Run: uniclaw mcp auth {}",
                                             server_name,
                                             server_name
                                         );
@@ -809,7 +809,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Shared state for job events (used by both orchestrator and web gateway)
     let job_event_tx: Option<
-        tokio::sync::broadcast::Sender<(uuid::Uuid, ironclaw::channels::web::types::SseEvent)>,
+        tokio::sync::broadcast::Sender<(uuid::Uuid, uniclaw::channels::web::types::SseEvent)>,
     > = if config.sandbox.enabled {
         let (tx, _) = tokio::sync::broadcast::channel(256);
         Some(tx)
@@ -818,7 +818,7 @@ async fn main() -> anyhow::Result<()> {
     };
     let prompt_queue = Arc::new(tokio::sync::Mutex::new(std::collections::HashMap::<
         uuid::Uuid,
-        std::collections::VecDeque<ironclaw::orchestrator::api::PendingPrompt>,
+        std::collections::VecDeque<uniclaw::orchestrator::api::PendingPrompt>,
     >::new()));
 
     let container_job_manager: Option<Arc<ContainerJobManager>> = if config.sandbox.enabled {
@@ -1213,13 +1213,13 @@ async fn main() -> anyhow::Result<()> {
 /// Check if onboarding is needed and return the reason.
 ///
 /// Returns `Some(reason)` if onboarding should be triggered, `None` otherwise.
-/// Called after `load_ironclaw_env()`, so DATABASE_URL from `~/.ironclaw/.env`
+/// Called after `load_uniclaw_env()`, so DATABASE_URL from `~/.uniclaw/.env`
 /// is already in the environment.
 #[cfg(any(feature = "postgres", feature = "libsql"))]
 fn check_onboard_needed() -> Option<&'static str> {
     let has_db = std::env::var("DATABASE_URL").is_ok()
         || std::env::var("LIBSQL_PATH").is_ok()
-        || ironclaw::config::default_libsql_path().exists();
+        || uniclaw::config::default_libsql_path().exists();
 
     if !has_db {
         return Some("Database not configured");
@@ -1235,7 +1235,7 @@ fn check_onboard_needed() -> Option<&'static str> {
 ///
 /// Returns the number of credentials injected.
 async fn inject_channel_credentials(
-    channel: &Arc<ironclaw::channels::wasm::WasmChannel>,
+    channel: &Arc<uniclaw::channels::wasm::WasmChannel>,
     secrets: &dyn SecretsStore,
     channel_name: &str,
 ) -> anyhow::Result<usize> {

@@ -1,4 +1,4 @@
-// IronClaw Web Gateway - Client
+// UniClaw Web Gateway - Client
 
 let token = '';
 let eventSource = null;
@@ -25,8 +25,8 @@ function authenticate() {
   // Test the token against the health-ish endpoint (chat/threads requires auth)
   apiFetch('/api/chat/threads')
     .then(() => {
-      sessionStorage.setItem('ironclaw_token', token);
-      document.cookie = 'ironclaw_session=' + encodeURIComponent(token) + '; Path=/; SameSite=Strict';
+      sessionStorage.setItem('uniclaw_token', token);
+      document.cookie = 'uniclaw_session=' + encodeURIComponent(token) + '; Path=/; SameSite=Strict';
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
       connectSSE();
@@ -37,8 +37,8 @@ function authenticate() {
       loadJobs();
     })
     .catch(() => {
-      sessionStorage.removeItem('ironclaw_token');
-      document.cookie = 'ironclaw_session=; Path=/; Max-Age=0; SameSite=Strict';
+      sessionStorage.removeItem('uniclaw_token');
+      document.cookie = 'uniclaw_session=; Path=/; Max-Age=0; SameSite=Strict';
       document.getElementById('auth-screen').style.display = '';
       document.getElementById('app').style.display = 'none';
       document.getElementById('auth-error').textContent = 'Invalid token';
@@ -51,7 +51,7 @@ document.getElementById('token-input').addEventListener('keydown', (e) => {
 
 // Auto-authenticate from URL param or saved session
 (function autoAuth() {
-  const saved = sessionStorage.getItem('ironclaw_token');
+  const saved = sessionStorage.getItem('uniclaw_token');
   if (saved) {
     document.getElementById('token-input').value = saved;
     // Hide auth screen immediately to prevent flash, authenticate() will

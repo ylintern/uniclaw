@@ -224,7 +224,7 @@ fn print_help() {
     let r = "\x1b[0m"; // reset
 
     println!();
-    println!("  {h}IronClaw REPL{r}");
+    println!("  {h}UniClaw REPL{r}");
     println!();
     println!("  {h}Commands{r}");
     println!("  {c}/help{r}              {d}show this help{r}");
@@ -246,11 +246,11 @@ fn print_help() {
     println!();
 }
 
-/// Get the history file path (~/.ironclaw/history).
+/// Get the history file path (~/.uniclaw/history).
 fn history_path() -> std::path::PathBuf {
     dirs::home_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("."))
-        .join(".ironclaw")
+        .join(".uniclaw")
         .join("history")
 }
 
@@ -298,7 +298,7 @@ impl Channel for ReplChannel {
             }
             let _ = rl.load_history(&hist_path);
 
-            println!("\x1b[1mIronClaw\x1b[0m  /help for commands, /quit to exit");
+            println!("\x1b[1mUniClaw\x1b[0m  /help for commands, /quit to exit");
             println!();
 
             loop {

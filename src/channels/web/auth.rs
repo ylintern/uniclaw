@@ -45,7 +45,7 @@ pub async fn auth_middleware(
     {
         for pair in cookie_str.split(';') {
             let part = pair.trim();
-            if let Some(token) = part.strip_prefix("ironclaw_session=")
+            if let Some(token) = part.strip_prefix("uniclaw_session=")
                 && auth.is_valid(token)
             {
                 return next.run(request).await;
