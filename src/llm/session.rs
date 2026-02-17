@@ -2,7 +2,7 @@
 //!
 //! Handles session token persistence, expiration detection, and renewal via
 //! OAuth flow. Tokens are persisted encrypted-at-rest in
-//! `~/.ironclaw/session.json` and refreshed automatically when expired.
+//! `~/.uniclaw/session.json` and refreshed automatically when expired.
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -39,7 +39,7 @@ pub struct SessionData {
 pub struct SessionConfig {
     /// Base URL for auth endpoints (e.g., https://private.near.ai).
     pub auth_base_url: String,
-    /// Path to session file (e.g., ~/.ironclaw/session.json).
+    /// Path to session file (e.g., ~/.uniclaw/session.json).
     pub session_path: PathBuf,
 }
 
@@ -52,11 +52,11 @@ impl Default for SessionConfig {
     }
 }
 
-/// Get the default session file path (~/.ironclaw/session.json).
+/// Get the default session file path (~/.uniclaw/session.json).
 pub fn default_session_path() -> PathBuf {
     dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(".ironclaw")
+        .join(".uniclaw")
         .join("session.json")
 }
 
@@ -643,6 +643,6 @@ mod tests {
     fn test_default_session_path() {
         let path = default_session_path();
         assert!(path.ends_with("session.json"));
-        assert!(path.to_string_lossy().contains(".ironclaw"));
+        assert!(path.to_string_lossy().contains(".uniclaw"));
     }
 }

@@ -9,11 +9,11 @@ use std::time::Duration;
 use async_trait::async_trait;
 use rust_decimal::Decimal;
 
-use ironclaw::channels::web::server::{GatewayState, start_server};
-use ironclaw::channels::web::sse::SseManager;
-use ironclaw::channels::web::ws::WsConnectionTracker;
-use ironclaw::error::LlmError;
-use ironclaw::llm::{
+use uniclaw::channels::web::server::{GatewayState, start_server};
+use uniclaw::channels::web::sse::SseManager;
+use uniclaw::channels::web::ws::WsConnectionTracker;
+use uniclaw::error::LlmError;
+use uniclaw::llm::{
     CompletionRequest, CompletionResponse, FinishReason, LlmProvider, ToolCompletionRequest,
     ToolCompletionResponse,
 };
@@ -42,7 +42,7 @@ impl LlmProvider for MockLlmProvider {
             .messages
             .iter()
             .rev()
-            .find(|m| m.role == ironclaw::llm::Role::User)
+            .find(|m| m.role == uniclaw::llm::Role::User)
             .map(|m| m.content.clone())
             .unwrap_or_else(|| "no user message".to_string());
 
@@ -63,7 +63,7 @@ impl LlmProvider for MockLlmProvider {
         if let Some(tool) = req.tools.first() {
             Ok(ToolCompletionResponse {
                 content: None,
-                tool_calls: vec![ironclaw::llm::ToolCall {
+                tool_calls: vec![uniclaw::llm::ToolCall {
                     id: "call_mock_001".to_string(),
                     name: tool.name.clone(),
                     arguments: serde_json::json!({"test": true}),
@@ -113,7 +113,7 @@ async fn start_test_server() -> (SocketAddr, Arc<GatewayState>) {
         shutdown_tx: tokio::sync::RwLock::new(None),
         ws_tracker: Some(Arc::new(WsConnectionTracker::new())),
         llm_provider: Some(Arc::new(MockLlmProvider)),
-        chat_rate_limiter: ironclaw::channels::web::server::RateLimiter::new(30, 60),
+        chat_rate_limiter: uniclaw::channels::web::server::RateLimiter::new(30, 60),
     });
 
     let addr: SocketAddr = "127.0.0.1:0".parse().unwrap();
@@ -267,10 +267,10 @@ async fn test_chat_completions_streaming() {
     // Check simulated streaming header
     assert_eq!(
         resp.headers()
-            .get("x-ironclaw-streaming")
+            .get("x-uniclaw-streaming")
             .and_then(|v| v.to_str().ok()),
         Some("simulated"),
-        "Expected x-ironclaw-streaming: simulated header"
+        "Expected x-uniclaw-streaming: simulated header"
     );
 
     let text = resp.text().await.unwrap();
@@ -433,7 +433,7 @@ async fn test_no_llm_provider_returns_503() {
         shutdown_tx: tokio::sync::RwLock::new(None),
         ws_tracker: Some(Arc::new(WsConnectionTracker::new())),
         llm_provider: None, // No LLM!
-        chat_rate_limiter: ironclaw::channels::web::server::RateLimiter::new(30, 60),
+        chat_rate_limiter: uniclaw::channels::web::server::RateLimiter::new(30, 60),
     });
 
     let addr: SocketAddr = "127.0.0.1:0".parse().unwrap();

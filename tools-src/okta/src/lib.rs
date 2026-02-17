@@ -1,4 +1,4 @@
-//! Okta WASM Tool for IronClaw.
+//! Okta WASM Tool for UniClaw.
 //!
 //! Provides user profile management, SSO app catalog browsing, and
 //! launch links for all applications under Okta single sign-on.

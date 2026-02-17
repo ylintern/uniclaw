@@ -19,11 +19,11 @@ use tokio::time::timeout;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 
-use ironclaw::channels::IncomingMessage;
-use ironclaw::channels::web::server::{GatewayState, start_server};
-use ironclaw::channels::web::sse::SseManager;
-use ironclaw::channels::web::types::SseEvent;
-use ironclaw::channels::web::ws::WsConnectionTracker;
+use uniclaw::channels::IncomingMessage;
+use uniclaw::channels::web::server::{GatewayState, start_server};
+use uniclaw::channels::web::sse::SseManager;
+use uniclaw::channels::web::types::SseEvent;
+use uniclaw::channels::web::ws::WsConnectionTracker;
 
 const AUTH_TOKEN: &str = "test-token-12345";
 const TIMEOUT: Duration = Duration::from_secs(5);
@@ -52,7 +52,7 @@ async fn start_test_server() -> (
         shutdown_tx: tokio::sync::RwLock::new(None),
         ws_tracker: Some(Arc::new(WsConnectionTracker::new())),
         llm_provider: None,
-        chat_rate_limiter: ironclaw::channels::web::server::RateLimiter::new(30, 60),
+        chat_rate_limiter: uniclaw::channels::web::server::RateLimiter::new(30, 60),
     });
 
     let addr: SocketAddr = "127.0.0.1:0".parse().unwrap();

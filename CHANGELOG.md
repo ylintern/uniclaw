@@ -7,50 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.3](https://github.com/nearai/ironclaw/compare/v0.1.2...v0.1.3) - 2026-02-12
+## [0.1.3](https://github.com/nearai/uniclaw/compare/v0.1.2...v0.1.3) - 2026-02-12
 
 ### Other
 
 - Enabled builds caching during CI/CD
 - Disabled npm publishing as the name is already taken
 
-## [0.1.2](https://github.com/nearai/ironclaw/compare/v0.1.1...v0.1.2) - 2026-02-12
+## [0.1.2](https://github.com/nearai/uniclaw/compare/v0.1.1...v0.1.2) - 2026-02-12
 
 ### Other
 
 - Added Installation instructions for the pre-built binaries
 - Disabled Windows ARM64 builds as auto-updater [provided by cargo-dist] does not support this platform yet and it is not a common platform for us to support
 
-## [0.1.1](https://github.com/nearai/ironclaw/compare/v0.1.0...v0.1.1) - 2026-02-12
+## [0.1.1](https://github.com/nearai/uniclaw/compare/v0.1.0...v0.1.1) - 2026-02-12
 
 ### Other
 
 - Renamed the secrets in release-plz.yml to match the configuration
 - Make sure that the binaries release CD it kicking in after release-plz
 
-## [0.1.0](https://github.com/nearai/ironclaw/releases/tag/v0.1.0) - 2026-02-12
+## [0.1.0](https://github.com/nearai/uniclaw/releases/tag/v0.1.0) - 2026-02-12
 
 ### Added
 
-- Add multi-provider LLM support via rig-core adapter ([#36](https://github.com/nearai/ironclaw/pull/36))
-- Sandbox jobs ([#4](https://github.com/nearai/ironclaw/pull/4))
-- Add Google Suite & Telegram WASM tools ([#9](https://github.com/nearai/ironclaw/pull/9))
-- Improve CLI ([#5](https://github.com/nearai/ironclaw/pull/5))
+- Add multi-provider LLM support via rig-core adapter ([#36](https://github.com/nearai/uniclaw/pull/36))
+- Sandbox jobs ([#4](https://github.com/nearai/uniclaw/pull/4))
+- Add Google Suite & Telegram WASM tools ([#9](https://github.com/nearai/uniclaw/pull/9))
+- Improve CLI ([#5](https://github.com/nearai/uniclaw/pull/5))
 
 ### Fixed
 
-- resolve runtime panic in Linux keychain integration ([#32](https://github.com/nearai/ironclaw/pull/32))
+- resolve runtime panic in Linux keychain integration ([#32](https://github.com/nearai/uniclaw/pull/32))
 
 ### Other
 
 - Skip release-plz on forks
 - Upgraded release-plz CD pipeline
-- Added CI/CD and release pipelines ([#45](https://github.com/nearai/ironclaw/pull/45))
-- DM pairing + Telegram channel improvements ([#17](https://github.com/nearai/ironclaw/pull/17))
-- Fixes build, adds missing sse event and correct command ([#11](https://github.com/nearai/ironclaw/pull/11))
-- Codex/feature parity pr hook ([#6](https://github.com/nearai/ironclaw/pull/6))
-- Add WebSocket gateway and control plane ([#8](https://github.com/nearai/ironclaw/pull/8))
-- select bundled Telegram channel and auto-install ([#3](https://github.com/nearai/ironclaw/pull/3))
+- Added CI/CD and release pipelines ([#45](https://github.com/nearai/uniclaw/pull/45))
+- DM pairing + Telegram channel improvements ([#17](https://github.com/nearai/uniclaw/pull/17))
+- Fixes build, adds missing sse event and correct command ([#11](https://github.com/nearai/uniclaw/pull/11))
+- Codex/feature parity pr hook ([#6](https://github.com/nearai/uniclaw/pull/6))
+- Add WebSocket gateway and control plane ([#8](https://github.com/nearai/uniclaw/pull/8))
+- select bundled Telegram channel and auto-install ([#3](https://github.com/nearai/uniclaw/pull/3))
 - Adding skills for reusable work
 - Fix MCP tool calls, approval loop, shutdown, and improve web UI
 - Add auth mode, fix MCP token handling, and parallelize startup loading
@@ -62,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add proactivity features: memory CLI, session pruning, self-repair notifications, slash commands, status diagnostics, context warnings
 - Add hosted MCP server support with OAuth 2.1 and token refresh
 - Add interactive setup wizard and persistent settings
-- Rebrand to IronClaw with security-first mission
+- Rebrand to UniClaw with security-first mission
 - Fix build_software tool stuck in planning mode loop
 - Enable sandbox by default
 - Fix Telegram Markdown formatting and clarify tool/memory distinctions
@@ -103,7 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix TuiChannel integration and enable in main.rs
 - Integrate Codex patterns: task scheduler, TUI, sessions, compaction
 - Adding LICENSE
-- Add README with IronClaw branding
+- Add README with UniClaw branding
 - Add WASM sandbox secure API extension
 - Wire database Store into agent loop
 - Implementing WASM runtime

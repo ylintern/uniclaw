@@ -18,7 +18,7 @@ use crate::sandbox::connect_docker;
 /// Which mode a sandbox container runs in.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JobMode {
-    /// Standard IronClaw worker with proxied LLM calls.
+    /// Standard UniClaw worker with proxied LLM calls.
     Worker,
     /// Claude Code bridge that spawns the `claude` CLI directly.
     ClaudeCode,
@@ -65,7 +65,7 @@ pub struct ContainerJobConfig {
 impl Default for ContainerJobConfig {
     fn default() -> Self {
         Self {
-            image: "ironclaw-worker:latest".to_string(),
+            image: "uniclaw-worker:latest".to_string(),
             memory_limit_mb: 2048,
             cpu_shares: 1024,
             orchestrator_port: 50051,
@@ -207,12 +207,12 @@ impl ContainerJobManager {
         );
 
         let mut env_vec = vec![
-            format!("IRONCLAW_WORKER_TOKEN={}", token),
-            format!("IRONCLAW_JOB_ID={}", job_id),
-            format!("IRONCLAW_ORCHESTRATOR_URL={}", orchestrator_url),
+            format!("UNICLAW_WORKER_TOKEN={}", token),
+            format!("UNICLAW_JOB_ID={}", job_id),
+            format!("UNICLAW_ORCHESTRATOR_URL={}", orchestrator_url),
         ];
 
-        // Build volume mounts (validate project_dir stays within ~/.ironclaw/projects/)
+        // Build volume mounts (validate project_dir stays within ~/.uniclaw/projects/)
         let mut binds = Vec::new();
         if let Some(ref dir) = project_dir {
             let canonical =
@@ -227,7 +227,7 @@ impl ContainerJobManager {
                     })?;
             let projects_base = dirs::home_dir()
                 .unwrap_or_else(|| PathBuf::from("."))
-                .join(".ironclaw")
+                .join(".uniclaw")
                 .join("projects");
             if let Ok(canonical_base) = projects_base.canonicalize()
                 && !canonical.starts_with(&canonical_base)
@@ -242,7 +242,7 @@ impl ContainerJobManager {
                 });
             }
             binds.push(format!("{}:/workspace:rw", canonical.display()));
-            env_vec.push("IRONCLAW_WORKSPACE=/workspace".to_string());
+            env_vec.push("UNICLAW_WORKSPACE=/workspace".to_string());
         }
 
         // Claude Code mode: mount host ~/.claude read-only for auth,
@@ -319,8 +319,8 @@ impl ContainerJobManager {
         };
 
         let container_name = match mode {
-            JobMode::Worker => format!("ironclaw-worker-{}", job_id),
-            JobMode::ClaudeCode => format!("ironclaw-claude-{}", job_id),
+            JobMode::Worker => format!("uniclaw-worker-{}", job_id),
+            JobMode::ClaudeCode => format!("uniclaw-claude-{}", job_id),
         };
         let options = CreateContainerOptions {
             name: container_name,

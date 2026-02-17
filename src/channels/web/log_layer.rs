@@ -106,7 +106,7 @@ impl Default for LogBroadcaster {
 /// fields from a tracing event.
 ///
 /// The terminal formatter shows something like:
-///   INFO ironclaw::agent: Request completed url="http://..." status=200
+///   INFO uniclaw::agent: Request completed url="http://..." status=200
 ///
 /// We replicate that by capturing both the message and the extra fields.
 struct MessageVisitor {
@@ -222,7 +222,7 @@ mod tests {
 
         broadcaster.send(LogEntry {
             level: "WARN".to_string(),
-            target: "ironclaw::test".to_string(),
+            target: "uniclaw::test".to_string(),
             message: "test warning".to_string(),
             timestamp: "2024-01-01T00:00:00.000Z".to_string(),
         });
@@ -236,7 +236,7 @@ mod tests {
     fn test_log_entry_serialization() {
         let entry = LogEntry {
             level: "ERROR".to_string(),
-            target: "ironclaw::agent".to_string(),
+            target: "uniclaw::agent".to_string(),
             message: "something broke".to_string(),
             timestamp: "2024-01-01T00:00:00.000Z".to_string(),
         };

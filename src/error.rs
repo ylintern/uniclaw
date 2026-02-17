@@ -1,4 +1,4 @@
-//! Error types for IronClaw.
+//! Error types for UniClaw.
 
 use std::time::Duration;
 
@@ -364,7 +364,7 @@ pub enum WorkerError {
     #[error("Worker execution failed: {reason}")]
     ExecutionFailed { reason: String },
 
-    #[error("Missing worker token (IRONCLAW_WORKER_TOKEN not set)")]
+    #[error("Missing worker token (UNICLAW_WORKER_TOKEN not set)")]
     MissingToken,
 }
 

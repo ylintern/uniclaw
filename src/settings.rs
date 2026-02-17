@@ -1,6 +1,6 @@
 //! User settings persistence.
 //!
-//! Stores user preferences in ~/.ironclaw/settings.json.
+//! Stores user preferences in ~/.uniclaw/settings.json.
 //! Settings are loaded with env var > settings.json > default priority.
 
 use std::path::PathBuf;
@@ -264,7 +264,7 @@ pub struct AgentSettings {
 }
 
 fn default_agent_name() -> String {
-    "ironclaw".to_string()
+    "uniclaw".to_string()
 }
 
 fn default_max_parallel_jobs() -> u32 {
@@ -564,11 +564,11 @@ impl Settings {
         map
     }
 
-    /// Get the default settings file path (~/.ironclaw/settings.json).
+    /// Get the default settings file path (~/.uniclaw/settings.json).
     pub fn default_path() -> std::path::PathBuf {
         dirs::home_dir()
             .unwrap_or_else(|| std::path::PathBuf::from("."))
-            .join(".ironclaw")
+            .join(".uniclaw")
             .join("settings.json")
     }
 
@@ -789,7 +789,7 @@ mod tests {
     fn test_get_setting() {
         let settings = Settings::default();
 
-        assert_eq!(settings.get("agent.name"), Some("ironclaw".to_string()));
+        assert_eq!(settings.get("agent.name"), Some("uniclaw".to_string()));
         assert_eq!(
             settings.get("agent.max_parallel_jobs"),
             Some("5".to_string())
@@ -818,7 +818,7 @@ mod tests {
 
         settings.agent.name = "custom".to_string();
         settings.reset("agent.name").unwrap();
-        assert_eq!(settings.agent.name, "ironclaw");
+        assert_eq!(settings.agent.name, "uniclaw");
     }
 
     #[test]

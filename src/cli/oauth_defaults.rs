@@ -12,7 +12,7 @@
 //!
 //! Default credentials are hardcoded below. They can be overridden at:
 //!
-//! - **Compile time**: Set IRONCLAW_GOOGLE_CLIENT_ID / IRONCLAW_GOOGLE_CLIENT_SECRET
+//! - **Compile time**: Set UNICLAW_GOOGLE_CLIENT_ID / UNICLAW_GOOGLE_CLIENT_SECRET
 //!   env vars before building to replace the hardcoded defaults.
 //! - **Runtime**: Users can set GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET
 //!   env vars, which take priority over built-in defaults.
@@ -31,11 +31,11 @@ pub struct OAuthCredentials {
 
 /// Google OAuth "Desktop App" credentials, shared across all Google tools.
 /// Compile-time env vars override the hardcoded defaults below.
-const GOOGLE_CLIENT_ID: &str = match option_env!("IRONCLAW_GOOGLE_CLIENT_ID") {
+const GOOGLE_CLIENT_ID: &str = match option_env!("UNICLAW_GOOGLE_CLIENT_ID") {
     Some(v) => v,
     None => "564604149681-efo25d43rs85v0tibdepsmdv5dsrhhr0.apps.googleusercontent.com",
 };
-const GOOGLE_CLIENT_SECRET: &str = match option_env!("IRONCLAW_GOOGLE_CLIENT_SECRET") {
+const GOOGLE_CLIENT_SECRET: &str = match option_env!("UNICLAW_GOOGLE_CLIENT_SECRET") {
     Some(v) => v,
     None => "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",
 };
@@ -238,7 +238,7 @@ pub fn landing_html(provider_name: &str, success: bool) -> String {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IronClaw - {heading}</title>
+<title>UniClaw - {heading}</title>
 <style>
   * {{ margin:0; padding:0; box-sizing:border-box }}
   body {{
@@ -284,7 +284,7 @@ pub fn landing_html(provider_name: &str, success: bool) -> String {
     {icon}
     <h1>{heading}</h1>
     <p>{subtitle}</p>
-    <div class="brand">IronClaw</div>
+    <div class="brand">UniClaw</div>
   </div>
 </body>
 </html>"#,
@@ -318,7 +318,7 @@ mod tests {
         let html = landing_html("Google", true);
         assert!(html.contains("Google Connected"));
         assert!(html.contains("charset"));
-        assert!(html.contains("IronClaw"));
+        assert!(html.contains("UniClaw"));
         assert!(html.contains("#22c55e")); // green accent
         assert!(!html.contains("Failed"));
     }
@@ -335,7 +335,7 @@ mod tests {
         let html = landing_html("Notion", false);
         assert!(html.contains("Authorization Failed"));
         assert!(html.contains("charset"));
-        assert!(html.contains("IronClaw"));
+        assert!(html.contains("UniClaw"));
         assert!(html.contains("#ef4444")); // red accent
         assert!(!html.contains("Connected"));
     }

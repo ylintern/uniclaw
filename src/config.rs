@@ -1,7 +1,7 @@
-//! Configuration for IronClaw.
+//! Configuration for UniClaw.
 //!
 //! Settings are loaded with priority: env var > database > default.
-//! `DATABASE_URL` lives in `~/.ironclaw/.env` (loaded via dotenvy early
+//! `DATABASE_URL` lives in `~/.uniclaw/.env` (loaded via dotenvy early
 //! in startup). Everything else comes from env vars, the DB settings
 //! table, or auto-detection.
 
@@ -51,7 +51,7 @@ impl Config {
         user_id: &str,
     ) -> Result<Self, ConfigError> {
         let _ = dotenvy::dotenv();
-        crate::bootstrap::load_ironclaw_env();
+        crate::bootstrap::load_uniclaw_env();
 
         // Load all settings from DB into a Settings struct
         let db_settings = match store.get_all_settings(user_id).await {
@@ -71,11 +71,11 @@ impl Config {
     /// and by CLI commands that don't have DB access.
     /// Falls back to legacy `settings.json` on disk if present.
     ///
-    /// Loads both `./.env` (standard, higher priority) and `~/.ironclaw/.env`
+    /// Loads both `./.env` (standard, higher priority) and `~/.uniclaw/.env`
     /// (lower priority) via dotenvy, which never overwrites existing vars.
     pub async fn from_env() -> Result<Self, ConfigError> {
         let _ = dotenvy::dotenv();
-        crate::bootstrap::load_ironclaw_env();
+        crate::bootstrap::load_uniclaw_env();
         let settings = Settings::load();
         Self::build(&settings).await
     }
@@ -179,7 +179,7 @@ pub struct DatabaseConfig {
     pub pool_size: usize,
 
     // -- libSQL fields --
-    /// Path to local libSQL database file (default: ~/.ironclaw/ironclaw.db).
+    /// Path to local libSQL database file (default: ~/.uniclaw/uniclaw.db).
     pub libsql_path: Option<PathBuf>,
     /// Turso cloud URL for remote sync (optional).
     pub libsql_url: Option<String>,
@@ -200,7 +200,7 @@ impl DatabaseConfig {
 
         // PostgreSQL URL is required only when using the postgres backend.
         // For libsql backend, default to an empty placeholder.
-        // DATABASE_URL is loaded from ~/.ironclaw/.env via dotenvy early in startup.
+        // DATABASE_URL is loaded from ~/.uniclaw/.env via dotenvy early in startup.
         let url = optional_env("DATABASE_URL")?
             .or_else(|| {
                 if backend == DatabaseBackend::LibSql {
@@ -211,7 +211,7 @@ impl DatabaseConfig {
             })
             .ok_or_else(|| ConfigError::MissingRequired {
                 key: "database_url".to_string(),
-                hint: "Run 'ironclaw onboard' or set DATABASE_URL environment variable".to_string(),
+                hint: "Run 'uniclaw onboard' or set DATABASE_URL environment variable".to_string(),
             })?;
 
         let pool_size = parse_optional_env("DATABASE_POOL_SIZE", 10)?;
@@ -250,17 +250,17 @@ impl DatabaseConfig {
     }
 }
 
-/// Default libSQL database path (~/.ironclaw/ironclaw.db).
+/// Default libSQL database path (~/.uniclaw/uniclaw.db).
 pub fn default_libsql_path() -> PathBuf {
     dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(".ironclaw")
-        .join("ironclaw.db")
+        .join(".uniclaw")
+        .join("uniclaw.db")
 }
 
 /// Which LLM backend to use.
 ///
-/// Defaults to `NearAi` to keep IronClaw close to the NEAR ecosystem.
+/// Defaults to `NearAi` to keep UniClaw close to the NEAR ecosystem.
 /// Users can override with `LLM_BACKEND` env var to use their own API keys.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum LlmBackend {
@@ -392,7 +392,7 @@ pub struct NearAiConfig {
     pub base_url: String,
     /// Base URL for auth/refresh endpoints (default: https://private.near.ai)
     pub auth_base_url: String,
-    /// Path to session file (default: ~/.ironclaw/session.json)
+    /// Path to session file (default: ~/.uniclaw/session.json)
     pub session_path: PathBuf,
     /// API mode: "responses" (chat-api) or "chat_completions" (cloud-api)
     pub api_mode: NearAiApiMode,
@@ -591,11 +591,11 @@ impl EmbeddingsConfig {
     }
 }
 
-/// Get the default session file path (~/.ironclaw/session.json).
+/// Get the default session file path (~/.uniclaw/session.json).
 fn default_session_path() -> PathBuf {
     dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(".ironclaw")
+        .join(".uniclaw")
         .join("session.json")
 }
 
@@ -605,7 +605,7 @@ pub struct ChannelsConfig {
     pub cli: CliConfig,
     pub http: Option<HttpConfig>,
     pub gateway: Option<GatewayConfig>,
-    /// Directory containing WASM channel modules (default: ~/.ironclaw/channels/).
+    /// Directory containing WASM channel modules (default: ~/.uniclaw/channels/).
     pub wasm_channels_dir: std::path::PathBuf,
     /// Whether WASM channels are enabled.
     pub wasm_channels_enabled: bool,
@@ -710,11 +710,11 @@ impl ChannelsConfig {
     }
 }
 
-/// Get the default channels directory (~/.ironclaw/channels/).
+/// Get the default channels directory (~/.uniclaw/channels/).
 fn default_channels_dir() -> PathBuf {
     dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(".ironclaw")
+        .join(".uniclaw")
         .join("channels")
 }
 
@@ -843,7 +843,7 @@ impl SafetyConfig {
 pub struct WasmConfig {
     /// Whether WASM tool execution is enabled.
     pub enabled: bool,
-    /// Directory containing installed WASM tools (default: ~/.ironclaw/tools/).
+    /// Directory containing installed WASM tools (default: ~/.uniclaw/tools/).
     pub tools_dir: PathBuf,
     /// Default memory limit in bytes (default: 10 MB).
     pub default_memory_limit: u64,
@@ -942,11 +942,11 @@ impl Default for WasmConfig {
     }
 }
 
-/// Get the default tools directory (~/.ironclaw/tools/).
+/// Get the default tools directory (~/.uniclaw/tools/).
 fn default_tools_dir() -> PathBuf {
     dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(".ironclaw")
+        .join(".uniclaw")
         .join("tools")
 }
 
