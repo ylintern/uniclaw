@@ -62,6 +62,7 @@ pub async fn run_doctor_command() -> anyhow::Result<()> {
     println!("  {passed} passed, {failed} failed");
     if failed > 0 {
         println!("\n  Some checks failed. This is normal if you don't use those features.");
+        anyhow::bail!("doctor detected {failed} failing check(s)");
     }
 
     Ok(())
