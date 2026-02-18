@@ -17,7 +17,8 @@ use uniclaw::{
         web::log_layer::{LogBroadcaster, WebLogLayer},
     },
     cli::{
-        Cli, Command, run_mcp_command, run_pairing_command, run_status_command, run_tool_command,
+        Cli, Command, run_doctor_command, run_mcp_command, run_pairing_command, run_status_command,
+        run_tool_command,
     },
     config::Config,
     context::ContextManager,
@@ -139,8 +140,7 @@ async fn main() -> anyhow::Result<()> {
                     .await
                     .map_err(|e| anyhow::anyhow!("{}", e))?;
 
-            return uniclaw::cli::run_memory_command_with_db(mem_cmd.clone(), db, embeddings)
-                .await;
+            return uniclaw::cli::run_memory_command_with_db(mem_cmd.clone(), db, embeddings).await;
         }
         Some(Command::Pairing(pairing_cmd)) => {
             tracing_subscriber::fmt()
@@ -150,6 +150,15 @@ async fn main() -> anyhow::Result<()> {
                 .init();
 
             return run_pairing_command(pairing_cmd.clone()).map_err(|e| anyhow::anyhow!("{}", e));
+        }
+        Some(Command::Doctor) => {
+            tracing_subscriber::fmt()
+                .with_env_filter(
+                    EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("warn")),
+                )
+                .init();
+
+            return run_doctor_command().await;
         }
         Some(Command::Status) => {
             tracing_subscriber::fmt()
@@ -364,9 +373,9 @@ async fn main() -> anyhow::Result<()> {
         match config.database.backend {
             #[cfg(feature = "libsql")]
             uniclaw::config::DatabaseBackend::LibSql => {
+                use secrecy::ExposeSecret as _;
                 use uniclaw::db::Database as _;
                 use uniclaw::db::libsql_backend::LibSqlBackend;
-                use secrecy::ExposeSecret as _;
 
                 let default_path = uniclaw::config::default_libsql_path();
                 let db_path = config
