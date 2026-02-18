@@ -40,9 +40,9 @@ This document tracks feature parity between UniClaw (Rust implementation) and Op
 | OpenAI-compatible HTTP API | ✅ | ✅ | /v1/chat/completions |
 | Canvas hosting | ✅ | ❌ | Agent-driven UI |
 | Gateway lock (PID-based) | ✅ | ❌ | |
-| launchd/systemd integration | ✅ | ❌ | |
+| launchd/systemd integration | ✅ | 🚧 | Service manager module added; CLI wiring pending |
 | Bonjour/mDNS discovery | ✅ | ❌ | |
-| Tailscale integration | ✅ | ❌ | |
+| Tailscale integration | ✅ | 🚧 | Tunnel provider abstraction includes Tailscale backend |
 | Health check endpoints | ✅ | ✅ | /api/health + /api/gateway/status |
 | `doctor` diagnostics | ✅ | ❌ | |
 
