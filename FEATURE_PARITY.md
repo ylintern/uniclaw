@@ -44,7 +44,7 @@ This document tracks feature parity between UniClaw (Rust implementation) and Op
 | Bonjour/mDNS discovery | ✅ | ❌ | |
 | Tailscale integration | ✅ | ❌ | |
 | Health check endpoints | ✅ | ✅ | /api/health + /api/gateway/status |
-| `doctor` diagnostics | ✅ | ❌ | |
+| `doctor` diagnostics | ✅ | ✅ | `uniclaw doctor` active diagnostics command |
 
 ### Owner: _Unassigned_
 
@@ -118,7 +118,7 @@ This document tracks feature parity between UniClaw (Rust implementation) and Op
 | `message send` | ✅ | ❌ | P2 | Send to channels |
 | `browser` | ✅ | ❌ | P3 | Browser automation |
 | `sandbox` | ✅ | ✅ | - | WASM sandbox |
-| `doctor` | ✅ | ❌ | P2 | Diagnostics |
+| `doctor` | ✅ | ✅ | P2 | Active diagnostics command (`uniclaw doctor`) |
 | `logs` | ✅ | ❌ | P3 | Query logs |
 | `update` | ✅ | ❌ | P3 | Self-update |
 | `completion` | ✅ | ❌ | P3 | Shell completion |
@@ -412,7 +412,7 @@ This document tracks feature parity between UniClaw (Rust implementation) and Op
 - ✅ Telegram channel (WASM tool, MTProto)
 - ✅ Docker sandbox (orchestrator/worker)
 - ✅ Cron job scheduling (routines)
-- ✅ CLI subcommands (onboard, config, status, memory)
+- ✅ CLI subcommands (onboard, config, status, memory, doctor)
 - ✅ Gateway token auth
 
 ### P1 - High Priority
@@ -427,7 +427,7 @@ This document tracks feature parity between UniClaw (Rust implementation) and Op
 - ❌ Web Control UI
 - ❌ WebChat channel
 - 🚧 Media handling (caption support; no image/PDF processing)
-- ❌ CLI subcommands (config, status, memory, doctor)
+- ✅ CLI subcommands (config, status, memory, doctor)
 - ❌ Ollama/local model support
 - ❌ Configuration hot-reload
 - ❌ Webhook trigger endpoint in web gateway
